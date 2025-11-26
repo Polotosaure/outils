@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIVA 2.0 - Formulaire Interactif</title>
+    <!-- Tailwind CSS pour le style (chargement rapide) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Icônes Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Styles spécifiques pour l'impression */
+        @media print {
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print { display: none !important; }
+            .print-break { page-break-before: always; }
+            .break-inside-avoid { break-inside: avoid; }
+            input, textarea { border: none !important; background: transparent !important; resize: none; }
+            /* Masquer les placeholders à l'impression */
+            input::placeholder, textarea::placeholder { color: transparent; }
+        }
+        
+        /* Style des cases à cocher personnalisées */
+        .checkbox-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .checkbox-cell:hover { background-color: #f9fafb; }
+        .checkbox-cell.active-child { background-color: #dbeafe; color: #1d4ed8; } /* Bleu clair */
+        .checkbox-cell.active-adult { background-color: #dbeafe; color: #1d4ed8; }
+        
+        /* Pour la section Hyperactivité (Vert) */
+        .section-hyper .checkbox-cell.active-child { background-color: #d1fae5; color: #047857; }
+        .section-hyper .checkbox-cell.active-adult { background-color: #d1fae5; color: #047857; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen text-gray-800">
+
+    <!-- Barre d'outils (Masquée à l'impression) -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-md p-4 mb-6">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">DIVA 2.0 Numérique</h1>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="resetForm()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                    <i data-lucide="rotate-ccw" width="16"></i> Réinitialiser
+                </button>
+                <button onclick="window.print()" class="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">
+                    <i data-lucide="printer" width="16"></i> Imprimer / PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Principal -->
+    <div class="max-w-4xl mx-auto p-8 bg-white shadow-xl mb-10 print:shadow-none print:p-0 print:mb-0">
+        
+        <!-- En-tête -->
+        <div class="border-b-4 border-gray-800 pb-6 mb-8">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-1">DIVA 2.0</h1>
+                    <p class="text-gray-500 text-sm uppercase tracking-wide">Entretien Diagnostique pour le TDAH chez l'adulte</p>
+                </div>
+                <div class="text-right hidden print:block">
+                    <div class="text-xs text-gray-400" id="print-date"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-200 print:bg-white print:border-gray-300">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <i data-lucide="user" width="12"></i> Nom du Patient
+                        </label>
+                        <input type="text" placeholder="Nom Prénom" class="w-full bg-white border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500 font-medium text-lg print:p-0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <i data-lucide="calendar" width="12"></i> Date de Naissance
+                        </label>
+                        <input type="date" class="w-full bg-white border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500 print:p-0">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Praticien / Examinateur</label>
+                        <input type="text" placeholder="Dr..." class="w-full bg-white border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500 print:p-0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date de l'entretien</label>
+                        <input type="date" id="date-entretien" class="w-full bg-white border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500 print:p-0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Inattention -->
+        <div class="mb-8 break-inside-avoid section-inattention">
+            <div class="flex justify-between items-end mb-4 border-b-2 border-blue-500 pb-2">
+                <h2 class="text-xl font-bold text-blue-800">Partie 1 : Déficit de l'Attention (Critère A)</h2>
+                <div class="text-sm text-gray-600 print:text-black font-medium">
+                    Score Enfance: <span id="score-inat-child" class="text-lg font-bold">0/9</span> &nbsp;|&nbsp; 
+                    Score Adulte: <span id="score-inat-adult" class="text-lg font-bold">0/9</span>
+                </div>
+            </div>
+            
+            <div class="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm print:border-black">
+                <div class="grid grid-cols-12 bg-gray-100 border-b border-gray-300 print:bg-gray-200 text-sm font-semibold text-gray-700">
+                    <div class="col-span-8 p-3">Critère / Symptôme</div>
+                    <div class="col-span-2 p-3 text-center border-l border-gray-300">Enfance</div>
+                    <div class="col-span-2 p-3 text-center border-l border-gray-300">Adulte</div>
+                </div>
+                <div id="container-inattention"></div>
+            </div>
+        </div>
+
+        <div class="h-4"></div>
+
+        <!-- Section 2: Hyperactivité -->
+        <div class="mb-8 break-inside-avoid section-hyper">
+            <div class="flex justify-between items-end mb-4 border-b-2 border-emerald-500 pb-2">
+                <h2 class="text-xl font-bold text-emerald-800">Partie 2 : Hyperactivité / Impulsivité (Critère A)</h2>
+                <div class="text-sm text-gray-600 print:text-black font-medium">
+                    Score Enfance: <span id="score-hyp-child" class="text-lg font-bold">0/9</span> &nbsp;|&nbsp; 
+                    Score Adulte: <span id="score-hyp-adult" class="text-lg font-bold">0/9</span>
+                </div>
+            </div>
+            
+            <div class="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm print:border-black">
+                <div class="grid grid-cols-12 bg-gray-100 border-b border-gray-300 print:bg-gray-200 text-sm font-semibold text-gray-700">
+                    <div class="col-span-8 p-3">Critère / Symptôme</div>
+                    <div class="col-span-2 p-3 text-center border-l border-gray-300">Enfance</div>
+                    <div class="col-span-2 p-3 text-center border-l border-gray-300">Adulte</div>
+                </div>
+                <div id="container-hyperactivity"></div>
+            </div>
+        </div>
+
+        <!-- Résumé -->
+        <div class="mt-8 border-t-2 border-gray-300 pt-6 break-inside-avoid">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Résumé des Scores</h3>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+                <div class="p-4 bg-blue-50 rounded border border-blue-100 print:border-black print:bg-white">
+                    <div class="font-bold text-blue-900 mb-2">Déficit de l'Attention</div>
+                    <div class="flex justify-between mb-1">
+                        <span>Enfance :</span>
+                        <span id="final-inat-child" class="font-bold">0/9</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Âge Adulte :</span>
+                        <span id="final-inat-adult" class="font-bold">0/9</span>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-emerald-50 rounded border border-emerald-100 print:border-black print:bg-white">
+                    <div class="font-bold text-emerald-900 mb-2">Hyperactivité / Impulsivité</div>
+                    <div class="flex justify-between mb-1">
+                        <span>Enfance :</span>
+                        <span id="final-hyp-child" class="font-bold">0/9</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Âge Adulte :</span>
+                        <span id="final-hyp-adult" class="font-bold">0/9</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Notes Cliniques & Conclusion</label>
+                <textarea class="w-full p-4 border border-gray-300 rounded-lg min-h-[150px] print:border print:border-gray-400" placeholder="Saisir vos observations ici..."></textarea>
+            </div>
+
+            <div class="mt-12 pt-8 border-t border-gray-200 flex justify-end gap-16 text-sm print:mt-16">
+                <div class="text-center">
+                    <div class="mb-12 font-bold">Signature du Patient</div>
+                    <div class="w-48 border-b border-gray-400"></div>
+                </div>
+                <div class="text-center">
+                    <div class="mb-12 font-bold">Signature du Praticien</div>
+                    <div class="w-48 border-b border-gray-400"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logique JavaScript -->
+    <script>
+        // --- Données ---
+        const questionsInattention = [
+            { id: 1, title: "Détails & Étourderies", text: "Souvent, ne parvient pas à prêter attention aux détails ou fait des fautes d'étourderie." },
+            { id: 2, title: "Attention Soutenue", text: "A souvent du mal à soutenir son attention au travail ou dans les jeux." },
+            { id: 3, title: "Écoute", text: "A souvent l'air de ne pas écouter quand on lui parle personnellement." },
+            { id: 4, title: "Consignes & Tâches", text: "A souvent du mal à suivre les instructions et ne parvient pas à terminer ses devoirs/tâches." },
+            { id: 5, title: "Organisation", text: "A souvent du mal à organiser ses travaux ou ses activités." },
+            { id: 6, title: "Effort Mental", text: "Évite souvent ou fait à contrecoeur les tâches nécessitant un effort mental soutenu." },
+            { id: 7, title: "Perte d'objets", text: "Perd souvent les objets nécessaires à son travail ou à ses activités." },
+            { id: 8, title: "Distractibilité", text: "Se laisse souvent facilement distraire par des stimuli externes." },
+            { id: 9, title: "Oublis Quotidiens", text: "A des oublis fréquents dans la vie quotidienne." }
+        ];
+
+        const questionsHyperactivity = [
+            { id: 10, title: "Agitation Motrice", text: "Remue souvent les mains ou les pieds ou se tortille sur son siège." },
+            { id: 11, title: "Difficulté à rester assis", text: "Se lève souvent en classe ou dans d'autres situations." },
+            { id: 12, title: "Agitation Interne", text: "Court ou grimpe souvent partout (ou sentiment d'agitation interne)." },
+            { id: 13, title: "Activités Calmes", text: "A souvent du mal à se tenir tranquille dans les jeux ou loisirs." },
+            { id: 14, title: "Sur la brèche", text: "Est souvent 'sur la brèche' ou agit comme s'il était 'monté sur ressorts'." },
+            { id: 15, title: "Loquacité", text: "Parle souvent trop." },
+            { id: 16, title: "Impulsivité Verbale", text: "Laisse souvent échapper la réponse avant la fin de la question." },
+            { id: 17, title: "Tour de rôle", text: "A souvent du mal à attendre son tour." },
+            { id: 18, title: "Interruption", text: "Interrompt souvent les autres ou impose sa présence." }
+        ];
+
+        // État global
+        let state = {}; 
+        // Structure: { "1-child": true, "1-adult": false, ... }
+
+        function renderRows(questions, containerId, sectionType) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = questions.map((q, idx) => `
+                <div class="grid grid-cols-12 border-b border-gray-200 last:border-0 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                    <div class="col-span-8 p-3">
+                        <div class="font-bold text-gray-800 text-sm mb-1">${q.id}. ${q.title}</div>
+                        <div class="text-gray-600 text-xs leading-relaxed">${q.text}</div>
+                    </div>
+                    <div class="col-span-2 border-l border-gray-200">
+                        <div onclick="toggle('${q.id}', 'child', '${sectionType}')" 
+                             id="cell-${q.id}-child"
+                             class="checkbox-cell w-full h-full min-h-[50px] flex items-center justify-center text-gray-300">
+                             <i data-lucide="square" class="unchecked-icon"></i>
+                             <i data-lucide="check-square" class="checked-icon hidden"></i>
+                        </div>
+                    </div>
+                    <div class="col-span-2 border-l border-gray-200">
+                        <div onclick="toggle('${q.id}', 'adult', '${sectionType}')" 
+                             id="cell-${q.id}-adult"
+                             class="checkbox-cell w-full h-full min-h-[50px] flex items-center justify-center text-gray-300">
+                             <i data-lucide="square" class="unchecked-icon"></i>
+                             <i data-lucide="check-square" class="checked-icon hidden"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggle(id, age, section) {
+            const key = `${id}-${age}`;
+            state[key] = !state[key];
+            updateUI(id, age, key);
+            calculateScores();
+        }
+
+        function updateUI(id, age, key) {
+            const cell = document.getElementById(`cell-${key}`);
+            const isActive = state[key];
+            const unchecked = cell.querySelector('.unchecked-icon');
+            const checked = cell.querySelector('.checked-icon');
+
+            if (isActive) {
+                cell.classList.add(`active-${age}`);
+                cell.classList.remove('text-gray-300');
+                unchecked.classList.add('hidden');
+                checked.classList.remove('hidden');
+            } else {
+                cell.classList.remove(`active-${age}`);
+                cell.classList.add('text-gray-300');
+                unchecked.classList.remove('hidden');
+                checked.classList.add('hidden');
+            }
+        }
+
+        function calculateScores() {
+            let inatChild = 0, inatAdult = 0;
+            let hypChild = 0, hypAdult = 0;
+
+            questionsInattention.forEach(q => {
+                if(state[`${q.id}-child`]) inatChild++;
+                if(state[`${q.id}-adult`]) inatAdult++;
+            });
+
+            questionsHyperactivity.forEach(q => {
+                if(state[`${q.id}-child`]) hypChild++;
+                if(state[`${q.id}-adult`]) hypAdult++;
+            });
+
+            // Update DOM
+            document.getElementById('score-inat-child').textContent = inatChild + "/9";
+            document.getElementById('score-inat-adult').textContent = inatAdult + "/9";
+            document.getElementById('score-hyp-child').textContent = hypChild + "/9";
+            document.getElementById('score-hyp-adult').textContent = hypAdult + "/9";
+
+            // Update Summary
+            document.getElementById('final-inat-child').textContent = inatChild + "/9";
+            document.getElementById('final-inat-adult').textContent = inatAdult + "/9";
+            document.getElementById('final-hyp-child').textContent = hypChild + "/9";
+            document.getElementById('final-hyp-adult').textContent = hypAdult + "/9";
+        }
+
+        function resetForm() {
+            if(confirm("Tout effacer ?")) {
+                state = {};
+                document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+                // Reset date
+                document.getElementById('date-entretien').valueAsDate = new Date();
+                // Reset Visuals
+                document.querySelectorAll('.checkbox-cell').forEach(cell => {
+                    cell.classList.remove('active-child', 'active-adult');
+                    cell.classList.add('text-gray-300');
+                    cell.querySelector('.unchecked-icon').classList.remove('hidden');
+                    cell.querySelector('.checked-icon').classList.add('hidden');
+                });
+                calculateScores();
+            }
+        }
+
+        // Init
+        window.onload = function() {
+            // Set date
+            document.getElementById('date-entretien').valueAsDate = new Date();
+            document.getElementById('print-date').textContent = "Généré le " + new Date().toLocaleDateString('fr-FR');
+
+            // Render tables
+            renderRows(questionsInattention, 'container-inattention', 'inattention');
+            renderRows(questionsHyperactivity, 'container-hyperactivity', 'hyperactivity');
+
+            // Refresh icons
+            lucide.createIcons();
+        };
+
+    </script>
+</body>
+</html>
