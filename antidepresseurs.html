@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mémo Antidépresseurs - Profils & Effets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .shadow-sm, .shadow-md { box-shadow: none !important; }
+            .border { border-color: #000 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- En-tête -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-sm p-4 mb-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-slate-100 rounded-full transition-colors" title="Retour à l'accueil">
+                    <i data-lucide="arrow-left" class="text-slate-600"></i>
+                </a>
+                <div class="bg-teal-600 p-2 rounded-lg text-white">
+                    <i data-lucide="pill" width="20" height="20"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">Antidépresseurs : Profils Cliniques</h1>
+            </div>
+            
+            <div class="relative w-full md:w-64">
+                <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-400 w-4 h-4"></i>
+                <input type="text" id="searchInput" placeholder="Rechercher (ex: Prozac, ISRS...)" 
+                       class="w-full pl-10 pr-4 py-2 bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-teal-500 rounded-lg text-sm transition-all outline-none">
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu Principal -->
+    <div class="max-w-6xl mx-auto p-4 md:p-6 mb-12">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-sm uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-4 font-bold w-1/6">Classe</th>
+                            <th class="p-4 font-bold w-1/4">Molécule <br><span class="text-xs text-slate-400 font-normal normal-case">(Nom Commercial)</span></th>
+                            <th class="p-4 font-bold w-1/4">Profil Clinique</th>
+                            <th class="p-4 font-bold w-1/3">Principaux Effets Secondaires & Remarques</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm divide-y divide-slate-100">
+                        <!-- Les lignes seront générées par JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-xs text-yellow-800 flex gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+            <p>
+                <strong>Avertissement :</strong> Ce tableau est une aide-mémoire simplifié. Il ne remplace pas le résumé des caractéristiques du produit (RCP) ni le jugement clinique. Les effets sont dose-dépendants et varient selon les patients.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        // Données des molécules
+        const data = [
+            // ISRS
+            {
+                class: "ISRS",
+                molecule: "Fluoxétine",
+                brands: "Prozac",
+                profile: ["stimulant"],
+                sideEffects: "Agitation, troubles digestifs, insomnie. Longue demi-vie (pas de syndrome de sevrage brutal)."
+            },
+            {
+                class: "ISRS",
+                molecule: "Paroxétine",
+                brands: "Deroxat, Divarius",
+                profile: ["sedatif", "anxiolytique"],
+                sideEffects: "Prise de poids, troubles sexuels fréquents, effets anticholinergiques légers. Syndrome de sevrage marqué (demi-vie courte)."
+            },
+            {
+                class: "ISRS",
+                molecule: "Sertraline",
+                brands: "Zoloft",
+                profile: ["intermediaire", "stimulant"],
+                sideEffects: "Troubles digestifs (diarrhées) fréquents au début. Profil assez polyvalent."
+            },
+            {
+                class: "ISRS",
+                molecule: "Escitalopram",
+                brands: "Seroplex",
+                profile: ["anxiolytique", "intermediaire"],
+                sideEffects: "Très sélectif. Surveillance QT nécessaire (dose-dépendant). Bonne tolérance globale."
+            },
+            {
+                class: "ISRS",
+                molecule: "Citalopram",
+                brands: "Seropram",
+                profile: ["anxiolytique", "sedatif"],
+                sideEffects: "Risque allongement QT (attention sujets âgés). Sédation légère possible."
+            },
+
+            // IRSNA
+            {
+                class: "IRSNA",
+                molecule: "Venlafaxine",
+                brands: "Effexor",
+                profile: ["stimulant", "anxiolytique"],
+                sideEffects: "Hypertension artérielle (dose-dépendante), sudation, nausées. Syndrome de sevrage très marqué."
+            },
+            {
+                class: "IRSNA",
+                molecule: "Duloxétine",
+                brands: "Cymbalta",
+                profile: ["stimulant", "antalgique"],
+                sideEffects: "Nausées, vertiges. Utile si douleurs neuropathiques associées."
+            },
+            {
+                class: "IRSNA",
+                molecule: "Milnacipran",
+                brands: "Ixel",
+                profile: ["stimulant"],
+                sideEffects: "Dysurie (attention hommes > 50 ans), hypertension, sudation."
+            },
+
+            // Tricycliques
+            {
+                class: "Tricyclique",
+                molecule: "Clomipramine",
+                brands: "Anafranil",
+                profile: ["anxiolytique", "sedatif"],
+                sideEffects: "Anticholinergiques ++ (bouche sèche, constipation, retention U). Prise de poids, hypotension ortho. Référence TOC."
+            },
+            {
+                class: "Tricyclique",
+                molecule: "Amitriptyline",
+                brands: "Laroxyl",
+                profile: ["tres-sedatif", "antalgique"],
+                sideEffects: "Sédation majeure, prise de poids, effets anticholinergiques marqués. Cardiotoxicité en surdosage."
+            },
+
+            // Autres / Atypiques
+            {
+                class: "Atypique",
+                molecule: "Mirtazapine",
+                brands: "Norset",
+                profile: ["tres-sedatif", "anxiolytique"],
+                sideEffects: "Prise de poids (augmentation appétit), sédation diurne. Peu de troubles sexuels."
+            },
+            {
+                class: "Atypique",
+                molecule: "Miansérine",
+                brands: "Athymil",
+                profile: ["sedatif"],
+                sideEffects: "Sédation, prise de poids. Risque agranulocytose (surveillance NFS recommandée)."
+            },
+            {
+                class: "Atypique",
+                molecule: "Vortioxétine",
+                brands: "Brintellix",
+                profile: ["stimulant", "procognitif"],
+                sideEffects: "Nausées fréquentes (transitoires). Peu d'effets sexuels ou pondéraux."
+            },
+            {
+                class: "Atypique",
+                molecule: "Agomélatine",
+                brands: "Valdoxan",
+                profile: ["sedatif"],
+                sideEffects: "Hépatotoxicité (surveillance transaminases obligatoire). Aide à resynchroniser le sommeil."
+            }
+        ];
+
+        // Configuration des badges
+        const badges = {
+            "stimulant": { label: "Psychotonique", class: "bg-orange-100 text-orange-800 border-orange-200" },
+            "sedatif": { label: "Sédatif", class: "bg-blue-100 text-blue-800 border-blue-200" },
+            "tres-sedatif": { label: "Très Sédatif", class: "bg-indigo-100 text-indigo-800 border-indigo-200 font-bold" },
+            "anxiolytique": { label: "Anxiolytique", class: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+            "intermediaire": { label: "Équilibré", class: "bg-slate-100 text-slate-600 border-slate-200" },
+            "antalgique": { label: "Antalgique", class: "bg-pink-100 text-pink-800 border-pink-200" },
+            "procognitif": { label: "Pro-cognitif", class: "bg-cyan-100 text-cyan-800 border-cyan-200" }
+        };
+
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+
+        function renderTable(filter = "") {
+            tableBody.innerHTML = "";
+            const lowerFilter = filter.toLowerCase();
+
+            data.forEach(item => {
+                const textToSearch = `${item.class} ${item.molecule} ${item.brands} ${item.sideEffects}`.toLowerCase();
+                
+                if (textToSearch.includes(lowerFilter)) {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition-colors group";
+                    
+                    // Badges HTML generation
+                    const badgesHtml = item.profile.map(p => {
+                        const b = badges[p] || badges["intermediaire"];
+                        return `<span class="inline-block px-2 py-1 rounded text-xs border ${b.class} mr-1 mb-1">${b.label}</span>`;
+                    }).join('');
+
+                    row.innerHTML = `
+                        <td class="p-4 align-top font-medium text-slate-500 text-xs uppercase">${item.class}</td>
+                        <td class="p-4 align-top">
+                            <div class="font-bold text-slate-800 text-lg">${item.molecule}</div>
+                            <div class="text-teal-600 font-medium text-sm">${item.brands}</div>
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex flex-wrap">${badgesHtml}</div>
+                        </td>
+                        <td class="p-4 align-top text-slate-600 text-sm leading-relaxed">
+                            ${item.sideEffects}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+            });
+            
+            if (tableBody.children.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400">Aucun résultat trouvé pour "${filter}"</td></tr>`;
+            }
+        }
+
+        // Init
+        renderTable();
+        lucide.createIcons();
+
+        // Search Event
+        searchInput.addEventListener('input', (e) => {
+            renderTable(e.target.value);
+        });
+
+    </script>
+</body>
+</html>
