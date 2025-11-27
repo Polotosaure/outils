@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubles de la Personnalité - Critères DSM-5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            .shadow-xl { box-shadow: none !important; }
+        }
+        .cluster-a { border-left: 4px solid #8b5cf6; }
+        .cluster-b { border-left: 4px solid #ef4444; }
+        .cluster-c { border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- En-tête -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-sm p-4 mb-6">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="text-slate-600"></i>
+                </a>
+                <div class="bg-amber-600 p-2 rounded-lg text-white">
+                    <i data-lucide="users" width="20" height="20"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">Troubles de la Personnalité</h1>
+            </div>
+            <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
+                <i data-lucide="printer" width="16"></i> PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-6 mb-12">
+
+        <!-- Introduction -->
+        <div class="bg-white shadow-lg rounded-xl p-8 mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-4">Critères Diagnostiques des Troubles de la Personnalité</h1>
+            <p class="text-slate-600 mb-4">
+                Les troubles de la personnalité sont organisés en trois <strong>clusters</strong> selon le DSM-5-TR,
+                basés sur des caractéristiques descriptives similaires.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
+                    <h3 class="font-bold text-purple-900 mb-1">Cluster A</h3>
+                    <p class="text-sm text-purple-700">Comportements bizarres ou excentriques</p>
+                </div>
+                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                    <h3 class="font-bold text-red-900 mb-1">Cluster B</h3>
+                    <p class="text-sm text-red-700">Comportements dramatiques, émotionnels ou impulsifs</p>
+                </div>
+                <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <h3 class="font-bold text-blue-900 mb-1">Cluster C</h3>
+                    <p class="text-sm text-blue-700">Comportements anxieux ou craintifs</p>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-slate-100 rounded-lg">
+                <h4 class="font-bold text-slate-800 mb-2">Critères généraux pour un Trouble de la Personnalité</h4>
+                <ul class="text-sm text-slate-700 space-y-1 list-disc list-inside">
+                    <li>Mode durable de l'expérience vécue et des conduites qui dévie des attentes de la culture</li>
+                    <li>Début à l'adolescence ou au début de l'âge adulte</li>
+                    <li>Stable dans le temps</li>
+                    <li>Entraîne une souffrance ou une altération du fonctionnement</li>
+                    <li>Non expliqué par un autre trouble mental, une substance ou une condition médicale</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CLUSTER A -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                <i data-lucide="hexagon" width="24"></i>
+                Cluster A : Troubles "Bizarres/Excentriques"
+            </h2>
+
+            <!-- Paranoïaque -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-a">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Paranoïaque</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Méfiance soupçonneuse envahissante envers les autres dont les intentions sont interprétées comme malveillantes.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 4 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">1.</span> Doute sans justification de la loyauté ou de la fidélité d'autrui</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">2.</span> Réticence à se confier par crainte que l'information soit utilisée contre soi</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">3.</span> Perçoit des significations cachées menaçantes ou humiliantes dans des remarques anodines</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">4.</span> Garde rancune (ne pardonne pas les atteintes ou offenses)</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">5.</span> Perçoit des attaques contre sa personne ou sa réputation et réagit avec colère</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">6.</span> Jalousie pathologique, soupçons récurrents concernant la fidélité du conjoint</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">7.</span> Suspicion injustifiée que son partenaire est infidèle</li>
+                </ul>
+            </div>
+
+            <!-- Schizoïde -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-a">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Schizoïde</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Détachement par rapport aux relations sociales avec restriction de la variété des expressions émotionnelles.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 4 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">1.</span> Ne recherche ni n'apprécie les relations proches (y compris familiales)</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">2.</span> Choisit presque toujours des activités solitaires</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">3.</span> Peu ou pas d'intérêt pour les relations sexuelles avec autrui</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">4.</span> Éprouve du plaisir dans peu d'activités, voire aucune</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">5.</span> N'a pas d'amis proches ou de confidents en dehors de la famille immédiate</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">6.</span> Indifférent aux éloges ou à la critique d'autrui</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">7.</span> Froideur émotionnelle, détachement ou émoussement affectif</li>
+                </ul>
+            </div>
+
+            <!-- Schizotypique -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-a">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Schizotypique</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Déficit social et interpersonnel avec gêne aiguë et capacités réduites, distorsions cognitives et excentricités du comportement.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 5 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">1.</span> Idées de référence (excepte les idées délirantes de référence)</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">2.</span> Croyances bizarres ou pensée magique (superstitions, télépathie, "sixième sens")</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">3.</span> Perceptions inhabituelles (illusions corporelles)</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">4.</span> Pensée et langage bizarres (vagues, circonstanciés, métaphoriques)</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">5.</span> Idéation méfiante ou persécutoire</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">6.</span> Inadéquation ou pauvreté des affects</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">7.</span> Comportement ou apparence bizarres, excentriques ou singuliers</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">8.</span> Absence d'amis proches en dehors des parents du premier degré</li>
+                    <li class="flex gap-2"><span class="text-purple-600 font-bold">9.</span> Anxiété sociale excessive qui ne diminue pas avec la familiarisation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CLUSTER B -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center gap-2">
+                <i data-lucide="flame" width="24"></i>
+                Cluster B : Troubles "Dramatiques/Émotionnels"
+            </h2>
+
+            <!-- Antisociale -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-b">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Antisociale</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Mépris et transgression des droits d'autrui survenant depuis l'âge de 15 ans.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 3 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">1.</span> Incapacité à se conformer aux normes sociales (actes délictueux répétés)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">2.</span> Tendance à tromper par profit ou par plaisir (mensonges répétés, arnaques)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">3.</span> Impulsivité ou incapacité à planifier à l'avance</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">4.</span> Irritabilité et agressivité (bagarres, agressions répétées)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">5.</span> Mépris inconsidéré de sa sécurité ou de celle d'autrui</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">6.</span> Irresponsabilité persistante (incapacité à maintenir un travail, honorer des obligations)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">7.</span> Absence de remords (indifférence ou rationalisation après avoir blessé autrui)</li>
+                </ul>
+                <div class="mt-3 p-3 bg-red-50 rounded text-sm">
+                    <strong>Note :</strong> Âge ≥ 18 ans + Présence d'un Trouble des Conduites avant 15 ans
+                </div>
+            </div>
+
+            <!-- Borderline -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-b">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Borderline (État-Limite)</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Instabilité des relations interpersonnelles, de l'image de soi et des affects avec impulsivité marquée.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 5 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">1.</span> Efforts effrénés pour éviter les abandons réels ou imaginés</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">2.</span> Relations interpersonnelles instables et intenses (alternance idéalisation/dévalorisation)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">3.</span> Perturbation de l'identité : instabilité marquée de l'image ou du sens de soi</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">4.</span> Impulsivité dans ≥ 2 domaines dommageables (dépenses, sexualité, toxiques, conduite, crises de boulimie)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">5.</span> Répétition de comportements, gestes ou menaces suicidaires, ou d'automutilations</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">6.</span> Instabilité affective (dysphorie épisodique intense, irritabilité ou anxiété durant quelques heures)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">7.</span> Sentiments chroniques de vide</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">8.</span> Colères intenses et inappropriées ou difficulté à contrôler la colère</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">9.</span> Idéation persécutoire transitoire ou symptômes dissociatifs sévères liés au stress</li>
+                </ul>
+            </div>
+
+            <!-- Histrionique -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-b">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Histrionique</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Réponses émotionnelles excessives et quête d'attention.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 5 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">1.</span> Mal à l'aise dans les situations où il/elle n'est pas au centre de l'attention</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">2.</span> Interactions caractérisées par un comportement de séduction sexuelle inappropriée</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">3.</span> Expression émotionnelle superficielle et rapidement changeante</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">4.</span> Utilise régulièrement l'apparence physique pour attirer l'attention</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">5.</span> Manière de parler trop subjective et pauvre en détails</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">6.</span> Dramatisation, théâtralisme et expression exagérée des émotions</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">7.</span> Suggestibilité (facilement influencé par autrui ou les circonstances)</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">8.</span> Considère les relations comme plus intimes qu'elles ne le sont réellement</li>
+                </ul>
+            </div>
+
+            <!-- Narcissique -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-b">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Narcissique</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Grandiosité (dans les fantasmes ou le comportement), besoin d'être admiré et manque d'empathie.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 5 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">1.</span> Sentiment grandiose de sa propre importance</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">2.</span> Absorbé par des fantasmes de succès illimité, de pouvoir, de splendeur, de beauté ou d'amour idéal</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">3.</span> Pense être "spécial" et unique, ne peut être compris que par des institutions ou personnes de haut niveau</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">4.</span> Besoin excessif d'être admiré</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">5.</span> Sentiment que tout lui est dû : s'attend à bénéficier d'un traitement de faveur</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">6.</span> Exploite l'autre dans les relations interpersonnelles</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">7.</span> Manque d'empathie : incapable de reconnaître ou de partager les sentiments d'autrui</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">8.</span> Envie les autres ou croit que les autres l'envient</li>
+                    <li class="flex gap-2"><span class="text-red-600 font-bold">9.</span> Comportements ou attitudes arrogants et hautains</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CLUSTER C -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+                <i data-lucide="shield-alert" width="24"></i>
+                Cluster C : Troubles "Anxieux/Craintifs"
+            </h2>
+
+            <!-- Évitante -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-c">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Évitante</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Inhibition sociale, sentiment de ne pas être à la hauteur et hypersensibilité au jugement négatif d'autrui.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 4 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">1.</span> Évite les activités sociales/professionnelles avec contacts interpersonnels par crainte de la critique, désapprobation ou rejet</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">2.</span> Réticence à s'impliquer avec autrui à moins d'être certain d'être aimé</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">3.</span> Réserve dans les relations intimes par crainte d'être ridiculisé ou humilié</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">4.</span> Craint d'être critiqué ou rejeté dans les situations sociales</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">5.</span> Inhibition dans les situations interpersonnelles nouvelles par sentiment de ne pas être à la hauteur</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">6.</span> Se perçoit comme socialement incompétent, sans attrait ou inférieur aux autres</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">7.</span> Réticence inhabituelle à prendre des risques personnels ou de s'engager dans de nouvelles activités par crainte d'éprouver de l'embarras</li>
+                </ul>
+            </div>
+
+            <!-- Dépendante -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-c">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Dépendante</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Besoin général et excessif d'être pris en charge conduisant à un comportement soumis et "collant" et à une peur de la séparation.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 5 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">1.</span> Difficulté à prendre des décisions dans la vie courante sans être rassuré ou conseillé de manière excessive</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">2.</span> Besoin que d'autres assument les responsabilités dans la plupart des domaines importants de sa vie</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">3.</span> Difficulté à exprimer un désaccord par crainte de perdre le soutien ou l'approbation</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">4.</span> Difficulté à initier des projets ou à faire des choses seul (manque de confiance en son jugement)</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">5.</span> Cherche à outrance à obtenir le soutien et l'appui d'autrui (va jusqu'à se porter volontaire pour des choses désagréables)</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">6.</span> Se sent mal à l'aise ou impuissant quand il/elle est seul(e) par crainte de ne pas être capable de se débrouiller</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">7.</span> Recherche de manière urgente une nouvelle relation comme source de soutien quand une relation proche se termine</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">8.</span> Préoccupation irréaliste d'être laissé(e) à se débrouiller seul(e)</li>
+                </ul>
+            </div>
+
+            <!-- Obsessionnelle-compulsive -->
+            <div class="bg-white shadow rounded-xl p-6 mb-4 cluster-c">
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Trouble de la Personnalité Obsessionnelle-Compulsive</h3>
+                <p class="text-sm text-slate-600 mb-4 italic">
+                    Préoccupation par l'ordre, le perfectionnisme et le contrôle mental et interpersonnel, au détriment de la souplesse, de l'ouverture et de l'efficacité.
+                </p>
+                <p class="text-sm font-bold text-slate-700 mb-2">Au moins 4 des manifestations suivantes :</p>
+                <ul class="text-sm text-slate-700 space-y-2 ml-4">
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">1.</span> Préoccupation par les détails, règles, listes, ordre, organisation ou horaires au point que le but principal de l'activité est perdu</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">2.</span> Perfectionnisme qui entrave l'achèvement des tâches (incapacité de terminer un projet)</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">3.</span> Dévotion excessive pour le travail et la productivité au détriment des loisirs et des amitiés</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">4.</span> Consciencieux, scrupuleux et rigide sur les questions de morale, d'éthique ou de valeurs</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">5.</span> Incapacité à jeter des objets usés ou sans valeur, même sans valeur sentimentale</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">6.</span> Réticence à déléguer ou à travailler avec autrui à moins que ceux-ci se soumettent exactement à sa façon de faire</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">7.</span> Adopte un style avare dans les dépenses pour soi-même et autrui; l'argent est perçu comme devant être thésaurisé en vue de catastrophes futures</li>
+                    <li class="flex gap-2"><span class="text-blue-600 font-bold">8.</span> Rigidité et entêtement</li>
+                </ul>
+                <div class="mt-3 p-3 bg-blue-50 rounded text-sm">
+                    <strong>⚠️ À distinguer du TOC :</strong> Trouble Obsessionnel-Compulsif (Axe I) avec obsessions et compulsions véritables
+                </div>
+            </div>
+        </div>
+
+        <!-- Ressources cliniques -->
+        <div class="bg-white shadow rounded-xl p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="book-open" width="20"></i>
+                Ressources Cliniques
+            </h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div class="p-4 bg-slate-50 rounded">
+                    <h4 class="font-bold text-slate-800 mb-2">Évaluations structurées</h4>
+                    <ul class="text-slate-700 space-y-1">
+                        <li>• SCID-5-PD (Structured Clinical Interview for DSM-5 Personality Disorders)</li>
+                        <li>• IPDE (International Personality Disorder Examination)</li>
+                        <li>• PDQ-4+ (Personality Diagnostic Questionnaire)</li>
+                    </ul>
+                </div>
+                <div class="p-4 bg-slate-50 rounded">
+                    <h4 class="font-bold text-slate-800 mb-2">Points clés diagnostic</h4>
+                    <ul class="text-slate-700 space-y-1">
+                        <li>• Début précoce (adolescence/jeune adulte)</li>
+                        <li>• Stabilité dans le temps et les contextes</li>
+                        <li>• Souffrance cliniquement significative</li>
+                        <li>• Exclusion d'autres causes (substances, médicales)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-6 text-center text-sm text-slate-500">
+            Référence : DSM-5-TR (2022) • Usage professionnel uniquement
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
