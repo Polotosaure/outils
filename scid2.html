@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCID-II - Questionnaire de Personnalité</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .shadow-xl, .shadow-lg, .shadow { box-shadow: none !important; }
+            input, textarea { border: none !important; }
+            .page-break { page-break-before: always; }
+            .disorder-card { break-inside: avoid; }
+        }
+        .cluster-a { border-left: 4px solid #8b5cf6; }
+        .cluster-b { border-left: 4px solid #ef4444; }
+        .cluster-c { border-left: 4px solid #3b82f6; }
+        .criterion-btn { transition: all 0.15s; }
+        .criterion-btn:hover { transform: scale(1.02); }
+        .criterion-btn.selected { font-weight: 600; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- En-tête sticky -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-sm p-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="text-slate-600"></i>
+                </a>
+                <div class="bg-fuchsia-600 p-2 rounded-lg text-white">
+                    <i data-lucide="scan-face" width="20" height="20"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">SCID-II Personnalité</h1>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="resetForm()" class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                    <i data-lucide="rotate-ccw" width="16"></i> Reset
+                </button>
+                <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg">
+                    <i data-lucide="printer" width="16"></i> PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score flottant -->
+    <div class="no-print fixed bottom-6 right-6 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-40 max-w-xs">
+        <div class="text-xs font-bold text-slate-500 uppercase mb-2">Troubles identifiés</div>
+        <div id="floating-summary" class="text-sm text-slate-700">
+            <span class="text-slate-400">Aucun seuil atteint</span>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="max-w-6xl mx-auto p-6 mb-12">
+
+        <!-- En-tête document -->
+        <div class="bg-white shadow-lg rounded-xl p-8 mb-8 print:shadow-none">
+            <div class="border-b-4 border-slate-800 pb-6 mb-6">
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">SCID-II</h1>
+                <p class="text-slate-500 uppercase text-xs font-bold tracking-wider">Structured Clinical Interview for DSM-5 Personality Disorders</p>
+                <p class="text-slate-600 text-sm mt-2">Questionnaire de dépistage des troubles de la personnalité</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded border border-slate-200 print:bg-white print:border-0">
+                <input type="text" id="patient-name" placeholder="Nom du Patient" class="bg-transparent border-b border-slate-300 p-2 w-full outline-none font-bold text-lg">
+                <input type="date" id="eval-date" class="bg-transparent border-b border-slate-300 p-2 w-full outline-none">
+                <input type="text" id="clinician" placeholder="Clinicien" class="bg-transparent border-b border-slate-300 p-2 w-full outline-none">
+            </div>
+
+            <div class="mt-6 p-4 bg-fuchsia-50 border border-fuchsia-200 rounded-lg text-sm text-fuchsia-900">
+                <strong>Instructions :</strong> Pour chaque critère, cochez <strong>OUI</strong> si le comportement/trait est présent de manière durable depuis l'âge adulte jeune, <strong>NON</strong> s'il est absent. Le seuil diagnostique est indiqué pour chaque trouble.
+            </div>
+        </div>
+
+        <!-- Résumé des résultats -->
+        <div class="bg-white shadow-lg rounded-xl p-6 mb-8 print:shadow-none" id="results-summary">
+            <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="clipboard-list" width="20"></i>
+                Synthèse des Résultats
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="summary-grid">
+                <!-- Généré par JS -->
+            </div>
+        </div>
+
+        <!-- CLUSTER A -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2 page-break">
+                <i data-lucide="hexagon" width="24"></i>
+                Cluster A : Bizarres / Excentriques
+            </h2>
+            <div id="cluster-a-container" class="space-y-6">
+                <!-- Généré par JS -->
+            </div>
+        </div>
+
+        <!-- CLUSTER B -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center gap-2 page-break">
+                <i data-lucide="flame" width="24"></i>
+                Cluster B : Dramatiques / Émotionnels
+            </h2>
+            <div id="cluster-b-container" class="space-y-6">
+                <!-- Généré par JS -->
+            </div>
+        </div>
+
+        <!-- CLUSTER C -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4 flex items-center gap-2 page-break">
+                <i data-lucide="shield-alert" width="24"></i>
+                Cluster C : Anxieux / Craintifs
+            </h2>
+            <div id="cluster-c-container" class="space-y-6">
+                <!-- Généré par JS -->
+            </div>
+        </div>
+
+        <!-- Commentaires cliniques -->
+        <div class="bg-white shadow-lg rounded-xl p-6 print:shadow-none">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Commentaires Cliniques</h3>
+            <textarea id="clinical-notes" class="w-full p-4 border border-slate-300 rounded-lg h-40" placeholder="Notes sur le contexte, les diagnostics différentiels, les comorbidités..."></textarea>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6 no-print">
+        <div class="max-w-6xl mx-auto px-6 text-center text-sm text-slate-500">
+            Référence : First MB, et al. SCID-5-PD (2016) • DSM-5 • Usage professionnel uniquement
+        </div>
+    </footer>
+
+    <script>
+        // Données des troubles de la personnalité avec critères DSM-5
+        const disorders = [
+            // CLUSTER A
+            {
+                id: "paranoid",
+                name: "Paranoïaque",
+                cluster: "A",
+                threshold: 4,
+                color: "purple",
+                criteria: [
+                    "S'attend sans raison suffisante à ce que les autres l'exploitent, lui nuisent ou le trompent",
+                    "Est préoccupé par des doutes injustifiés concernant la loyauté ou la fidélité de ses amis ou associés",
+                    "Est réticent à se confier à autrui en raison d'une crainte injustifiée que l'information soit utilisée contre lui",
+                    "Discerne des significations cachées, humiliantes ou menaçantes dans des commentaires ou événements anodins",
+                    "Garde rancune tenacement (ne pardonne pas d'être blessé, insulté ou dédaigné)",
+                    "Perçoit des attaques contre sa personne ou sa réputation alors que ce n'est pas apparent et est prompt à la contre-attaque ou réagit avec colère",
+                    "Met en doute de manière répétée et sans justification la fidélité de son conjoint ou partenaire sexuel"
+                ]
+            },
+            {
+                id: "schizoid",
+                name: "Schizoïde",
+                cluster: "A",
+                threshold: 4,
+                color: "purple",
+                criteria: [
+                    "Ne recherche ni n'apprécie les relations proches, y compris les relations intrafamiliales",
+                    "Choisit presque toujours des activités solitaires",
+                    "N'a que peu ou pas d'intérêt pour les relations sexuelles avec autrui",
+                    "N'éprouve du plaisir que dans de rares activités, sinon dans aucune",
+                    "N'a pas d'amis proches ou de confidents, en dehors de ses parents du premier degré",
+                    "Semble indifférent aux éloges ou à la critique d'autrui",
+                    "Fait preuve de froideur, de détachement ou d'émoussement de l'affectivité"
+                ]
+            },
+            {
+                id: "schizotypal",
+                name: "Schizotypique",
+                cluster: "A",
+                threshold: 5,
+                color: "purple",
+                criteria: [
+                    "Idées de référence (à l'exclusion des idées délirantes de référence)",
+                    "Croyances bizarres ou pensée magique influençant le comportement (superstitions, croyance en la télépathie, 'sixième sens')",
+                    "Perceptions inhabituelles, notamment illusions corporelles",
+                    "Pensée et langage bizarres (vagues, circonstanciés, métaphoriques, alambiqués ou stéréotypés)",
+                    "Idéation méfiante ou persécutoire",
+                    "Inadéquation ou pauvreté des affects",
+                    "Comportement ou aspect bizarre, excentrique ou singulier",
+                    "Absence d'amis proches ou de confidents en dehors des parents du premier degré",
+                    "Anxiété sociale excessive qui ne diminue pas avec la familiarité et tend à être associée à des craintes persécutoires"
+                ]
+            },
+            // CLUSTER B
+            {
+                id: "antisocial",
+                name: "Antisociale",
+                cluster: "B",
+                threshold: 3,
+                color: "red",
+                criteria: [
+                    "Incapacité de se conformer aux normes sociales qui déterminent les comportements légaux (répétition d'actes passibles d'arrestation)",
+                    "Tendance à tromper par profit ou par plaisir (mensonges répétés, utilisation de pseudonymes, escroqueries)",
+                    "Impulsivité ou incapacité à planifier à l'avance",
+                    "Irritabilité et agressivité (bagarres ou agressions physiques répétées)",
+                    "Mépris inconsidéré pour sa sécurité ou celle d'autrui",
+                    "Irresponsabilité persistante (incapacité à assumer un emploi stable ou honorer des obligations financières)",
+                    "Absence de remords (indifférence ou rationalisation devant le fait d'avoir blessé, maltraité ou volé autrui)"
+                ],
+                note: "Âge ≥ 18 ans requis + Trouble des conduites avant 15 ans"
+            },
+            {
+                id: "borderline",
+                name: "Borderline (État-limite)",
+                cluster: "B",
+                threshold: 5,
+                color: "red",
+                criteria: [
+                    "Efforts effrénés pour éviter les abandons réels ou imaginés",
+                    "Mode de relations interpersonnelles instables et intenses (alternance entre idéalisation excessive et dévalorisation)",
+                    "Perturbation de l'identité : instabilité marquée et persistante de l'image ou de la notion de soi",
+                    "Impulsivité dans au moins 2 domaines potentiellement dommageables (dépenses, sexualité, toxiques, conduite automobile, crises de boulimie)",
+                    "Répétition de comportements, de gestes ou de menaces suicidaires, ou d'automutilations",
+                    "Instabilité affective due à une réactivité marquée de l'humeur (dysphorie épisodique intense, irritabilité ou anxiété durant quelques heures)",
+                    "Sentiments chroniques de vide",
+                    "Colères intenses et inappropriées ou difficulté à contrôler sa colère (accès fréquents de colère, colère constante, bagarres répétées)",
+                    "Survenue transitoire dans des situations de stress d'une idéation persécutoire ou de symptômes dissociatifs sévères"
+                ]
+            },
+            {
+                id: "histrionic",
+                name: "Histrionique",
+                cluster: "B",
+                threshold: 5,
+                color: "red",
+                criteria: [
+                    "Est mal à l'aise dans les situations où il/elle n'est pas au centre de l'attention",
+                    "L'interaction avec autrui est souvent caractérisée par un comportement de séduction sexuelle inadaptée ou une attitude provocante",
+                    "Expression émotionnelle superficielle et rapidement changeante",
+                    "Utilise régulièrement son aspect physique pour attirer l'attention sur soi",
+                    "Manière de parler trop subjective mais pauvre en détails",
+                    "Dramatisation, théâtralisme et exagération de l'expression émotionnelle",
+                    "Suggestibilité (est facilement influencé par autrui ou par les circonstances)",
+                    "Considère que ses relations sont plus intimes qu'elles ne le sont en réalité"
+                ]
+            },
+            {
+                id: "narcissistic",
+                name: "Narcissique",
+                cluster: "B",
+                threshold: 5,
+                color: "red",
+                criteria: [
+                    "A un sens grandiose de sa propre importance (surestime ses réalisations et ses capacités)",
+                    "Est absorbé par des fantasmes de succès illimité, de pouvoir, de splendeur, de beauté ou d'amour idéal",
+                    "Pense être 'spécial' et unique et ne pouvoir être admis ou compris que par des institutions ou des gens spéciaux et de haut niveau",
+                    "Besoin excessif d'être admiré",
+                    "Pense que tout lui est dû : s'attend sans raison à bénéficier d'un traitement particulièrement favorable",
+                    "Exploite l'autre dans les relations interpersonnelles (utilise autrui pour parvenir à ses propres fins)",
+                    "Manque d'empathie : n'est pas disposé à reconnaître ou à partager les sentiments et les besoins d'autrui",
+                    "Envie souvent les autres ou croit que les autres l'envient",
+                    "Fait preuve d'attitudes et de comportements arrogants et hautains"
+                ]
+            },
+            // CLUSTER C
+            {
+                id: "avoidant",
+                name: "Évitante",
+                cluster: "C",
+                threshold: 4,
+                color: "blue",
+                criteria: [
+                    "Évite les activités sociales professionnelles impliquant des contacts importants avec autrui par crainte d'être critiqué, désapprouvé ou rejeté",
+                    "Réticence à s'impliquer avec autrui à moins d'être certain d'être aimé",
+                    "Est réservé dans les relations intimes par crainte d'être exposé à la honte ou au ridicule",
+                    "Craint d'être critiqué ou rejeté dans les situations sociales",
+                    "Est inhibé dans les situations interpersonnelles nouvelles à cause d'un sentiment de ne pas être à la hauteur",
+                    "Se perçoit comme socialement incompétent, sans attrait ou inférieur aux autres",
+                    "Est particulièrement réticent à prendre des risques personnels ou à s'engager dans de nouvelles activités par crainte d'éprouver de l'embarras"
+                ]
+            },
+            {
+                id: "dependent",
+                name: "Dépendante",
+                cluster: "C",
+                threshold: 5,
+                color: "blue",
+                criteria: [
+                    "A du mal à prendre des décisions dans la vie courante sans être rassuré ou conseillé de manière excessive par autrui",
+                    "A besoin que d'autres assument les responsabilités dans la plupart des domaines importants de sa vie",
+                    "A du mal à exprimer un désaccord avec autrui de peur de perdre son soutien ou son approbation",
+                    "A du mal à initier des projets ou à faire des choses seul (manque de confiance en son propre jugement)",
+                    "Cherche à outrance à obtenir le soutien et l'appui d'autrui, au point de se porter volontaire pour des choses désagréables",
+                    "Se sent mal à l'aise ou impuissant quand il est seul par crainte exagérée d'être incapable de se débrouiller",
+                    "Lorsqu'une relation proche se termine, recherche de manière urgente une autre relation qui puisse assurer les soins et le soutien dont il a besoin",
+                    "Est préoccupé de manière irréaliste par la crainte d'être laissé à se débrouiller seul"
+                ]
+            },
+            {
+                id: "obsessive",
+                name: "Obsessionnelle-Compulsive",
+                cluster: "C",
+                threshold: 4,
+                color: "blue",
+                criteria: [
+                    "Préoccupation par les détails, les règles, les inventaires, l'organisation ou les plans au point que le but principal de l'activité est perdu de vue",
+                    "Perfectionnisme qui entrave l'achèvement des tâches (incapacité de mener à bien un projet car les exigences personnelles trop strictes ne sont pas remplies)",
+                    "Dévotion excessive pour le travail et la productivité à l'exclusion des loisirs et des amitiés",
+                    "Est trop consciencieux, scrupuleux et rigide sur des questions de morale, d'éthique ou de valeurs",
+                    "Incapacité de jeter des objets usés ou sans utilité même si ceux-ci n'ont pas de valeur sentimentale",
+                    "Réticence à déléguer des tâches ou à travailler avec autrui à moins que les autres se soumettent exactement à sa manière de faire",
+                    "Se montre avare avec l'argent pour soi-même et les autres ; l'argent est perçu comme quelque chose qui doit être thésaurisé en vue de catastrophes futures",
+                    "Se montre rigide et têtu"
+                ],
+                note: "À distinguer du TOC (Axe I) avec obsessions et compulsions véritables"
+            }
+        ];
+
+        // État des réponses
+        let responses = {};
+
+        // Initialiser les réponses
+        disorders.forEach(d => {
+            responses[d.id] = {};
+            d.criteria.forEach((_, idx) => {
+                responses[d.id][idx] = null; // null = non répondu, true = oui, false = non
+            });
+        });
+
+        // Rendu d'un trouble
+        function renderDisorder(disorder) {
+            const count = Object.values(responses[disorder.id]).filter(v => v === true).length;
+            const answered = Object.values(responses[disorder.id]).filter(v => v !== null).length;
+            const total = disorder.criteria.length;
+            const meetsThreshold = count >= disorder.threshold;
+
+            const colorClasses = {
+                purple: { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", badge: "bg-purple-600" },
+                red: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "bg-red-600" },
+                blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", badge: "bg-blue-600" }
+            };
+            const colors = colorClasses[disorder.color];
+
+            return `
+                <div class="disorder-card bg-white shadow rounded-xl p-6 cluster-${disorder.cluster.toLowerCase()} print:shadow-none print:border print:border-slate-300">
+                    <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">${disorder.name}</h3>
+                            <p class="text-sm text-slate-500">Seuil : ≥ ${disorder.threshold} critères sur ${total}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="text-2xl font-bold ${meetsThreshold ? 'text-red-600' : 'text-slate-700'}">${count}/${total}</div>
+                                <div class="text-xs ${meetsThreshold ? 'text-red-500 font-bold' : 'text-slate-400'}">
+                                    ${meetsThreshold ? 'SEUIL ATTEINT' : `${answered}/${total} cotés`}
+                                </div>
+                            </div>
+                            ${meetsThreshold ? `<div class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>` : ''}
+                        </div>
+                    </div>
+                    ${disorder.note ? `<div class="mb-4 p-3 ${colors.bg} ${colors.border} border rounded text-sm ${colors.text}"><strong>Note :</strong> ${disorder.note}</div>` : ''}
+                    <div class="space-y-3">
+                        ${disorder.criteria.map((criterion, idx) => {
+                            const response = responses[disorder.id][idx];
+                            const yesSelected = response === true;
+                            const noSelected = response === false;
+                            return `
+                                <div class="flex gap-3 items-start p-3 rounded ${yesSelected ? colors.bg + ' ' + colors.border + ' border' : 'bg-slate-50'} print:bg-white print:border print:border-slate-200">
+                                    <span class="font-bold ${colors.text} w-6 shrink-0">${idx + 1}.</span>
+                                    <p class="text-sm text-slate-700 flex-grow">${criterion}</p>
+                                    <div class="flex gap-2 shrink-0">
+                                        <button onclick="setResponse('${disorder.id}', ${idx}, true)"
+                                            class="criterion-btn px-3 py-1 text-xs rounded border ${yesSelected ? colors.badge + ' text-white border-transparent selected' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100'}">
+                                            OUI
+                                        </button>
+                                        <button onclick="setResponse('${disorder.id}', ${idx}, false)"
+                                            class="criterion-btn px-3 py-1 text-xs rounded border ${noSelected ? 'bg-slate-700 text-white border-transparent selected' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100'}">
+                                            NON
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Rendu de la synthèse
+        function renderSummary() {
+            const summaryGrid = document.getElementById('summary-grid');
+            const floatingSummary = document.getElementById('floating-summary');
+
+            const clusterA = disorders.filter(d => d.cluster === 'A');
+            const clusterB = disorders.filter(d => d.cluster === 'B');
+            const clusterC = disorders.filter(d => d.cluster === 'C');
+
+            const renderClusterSummary = (cluster, name, color, borderColor) => {
+                return `
+                    <div class="p-4 ${color} rounded-lg border-l-4 ${borderColor}">
+                        <h4 class="font-bold text-slate-800 mb-3">${name}</h4>
+                        <div class="space-y-2">
+                            ${cluster.map(d => {
+                                const count = Object.values(responses[d.id]).filter(v => v === true).length;
+                                const meetsThreshold = count >= d.threshold;
+                                return `
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="${meetsThreshold ? 'font-bold text-red-700' : 'text-slate-600'}">${d.name}</span>
+                                        <span class="${meetsThreshold ? 'font-bold text-red-600' : 'text-slate-500'}">${count}/${d.threshold}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            };
+
+            summaryGrid.innerHTML =
+                renderClusterSummary(clusterA, 'Cluster A', 'bg-purple-50', 'border-purple-500') +
+                renderClusterSummary(clusterB, 'Cluster B', 'bg-red-50', 'border-red-500') +
+                renderClusterSummary(clusterC, 'Cluster C', 'bg-blue-50', 'border-blue-500');
+
+            // Floating summary
+            const identified = disorders.filter(d => {
+                const count = Object.values(responses[d.id]).filter(v => v === true).length;
+                return count >= d.threshold;
+            });
+
+            if (identified.length > 0) {
+                floatingSummary.innerHTML = identified.map(d => `
+                    <span class="inline-block px-2 py-1 text-xs font-bold rounded ${
+                        d.cluster === 'A' ? 'bg-purple-100 text-purple-700' :
+                        d.cluster === 'B' ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                    } mr-1 mb-1">${d.name}</span>
+                `).join('');
+            } else {
+                floatingSummary.innerHTML = '<span class="text-slate-400">Aucun seuil atteint</span>';
+            }
+        }
+
+        // Rendu complet
+        function render() {
+            const clusterA = disorders.filter(d => d.cluster === 'A');
+            const clusterB = disorders.filter(d => d.cluster === 'B');
+            const clusterC = disorders.filter(d => d.cluster === 'C');
+
+            document.getElementById('cluster-a-container').innerHTML = clusterA.map(renderDisorder).join('');
+            document.getElementById('cluster-b-container').innerHTML = clusterB.map(renderDisorder).join('');
+            document.getElementById('cluster-c-container').innerHTML = clusterC.map(renderDisorder).join('');
+
+            renderSummary();
+        }
+
+        // Définir une réponse
+        function setResponse(disorderId, criterionIdx, value) {
+            responses[disorderId][criterionIdx] = value;
+            render();
+        }
+
+        // Reset
+        function resetForm() {
+            if (confirm('Effacer toutes les réponses ?')) {
+                disorders.forEach(d => {
+                    d.criteria.forEach((_, idx) => {
+                        responses[d.id][idx] = null;
+                    });
+                });
+                document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+                render();
+            }
+        }
+
+        // Initialisation
+        window.onload = function() {
+            lucide.createIcons();
+            render();
+            // Date du jour par défaut
+            document.getElementById('eval-date').valueAsDate = new Date();
+        };
+    </script>
+</body>
+</html>
