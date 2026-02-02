@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveillance des Traitements Psychiatriques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .shadow-sm, .shadow-md, .shadow-xl { box-shadow: none !important; }
+            .page-break { page-break-before: always; }
+            .category-section { page-break-inside: avoid; }
+        }
+        .drug-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- En-tête -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-sm p-4 mb-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-slate-100 rounded-full transition-colors" title="Retour à l'accueil">
+                    <i data-lucide="arrow-left" class="text-slate-600"></i>
+                </a>
+                <div class="bg-cyan-600 p-2 rounded-lg text-white">
+                    <i data-lucide="clipboard-check" width="20" height="20"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">Surveillance Psychiatrique</h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="relative w-full md:w-64">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-400 w-4 h-4"></i>
+                    <input type="text" id="searchInput" placeholder="Rechercher un médicament..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-cyan-500 rounded-lg text-sm transition-all outline-none">
+                </div>
+                <button onclick="window.print()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Imprimer">
+                    <i data-lucide="printer" class="text-slate-600"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu Principal -->
+    <div class="max-w-7xl mx-auto p-4 md:p-6 mb-12">
+
+        <!-- Légende -->
+        <div class="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+            <div class="flex flex-wrap gap-4 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span class="text-slate-600">Surveillance stricte / Risque élevé</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                    <span class="text-slate-600">Surveillance régulière recommandée</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <span class="text-slate-600">Surveillance standard / Si terrain</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sections par catégorie -->
+        <div id="content"></div>
+
+    </div>
+
+    <script>
+        // Base de données des médicaments et leur surveillance
+        const medications = {
+            isrs: {
+                title: "ISRS - Inhibiteurs Sélectifs de la Recapture de la Sérotonine",
+                color: "sky",
+                icon: "pill",
+                drugs: [
+                    {
+                        name: "Sertraline",
+                        brand: "Zoloft",
+                        doses: "50-200 mg/j",
+                        preTherapy: [
+                            { test: "Natrémie", priority: "high", note: "Risque d'hyponatrémie (surtout > 65 ans, diurétiques)" },
+                            { test: "Bilan hépatique", priority: "medium", note: "Si terrain hépatique connu" },
+                            { test: "ECG", priority: "low", note: "Si antécédent cardiaque ou QT long" }
+                        ],
+                        ongoing: [
+                            { test: "Natrémie", frequency: "J15, M1, puis si signes", priority: "high" },
+                            { test: "Clinique", frequency: "M1, M3, puis /3-6 mois", priority: "medium", note: "Efficacité, tolérance, idées suicidaires (< 25 ans)" }
+                        ],
+                        warnings: ["Syndrome sérotoninergique si association IMAO/tramadol", "Risque hémorragique si AINS/anticoagulants"]
+                    },
+                    {
+                        name: "Fluoxétine",
+                        brand: "Prozac",
+                        doses: "20-60 mg/j",
+                        preTherapy: [
+                            { test: "Natrémie", priority: "high", note: "Risque d'hyponatrémie" },
+                            { test: "Bilan hépatique", priority: "low", note: "Si terrain" }
+                        ],
+                        ongoing: [
+                            { test: "Natrémie", frequency: "J15, M1, puis si signes", priority: "high" },
+                            { test: "Clinique", frequency: "M1, M3, puis /3-6 mois", priority: "medium" }
+                        ],
+                        warnings: ["Demi-vie très longue (4-6 jours) → interactions prolongées", "Inhibiteur puissant CYP2D6 → interactions médicamenteuses+++"]
+                    },
+                    {
+                        name: "Escitalopram",
+                        brand: "Seroplex",
+                        doses: "10-20 mg/j",
+                        preTherapy: [
+                            { test: "ECG", priority: "high", note: "Allongement QT dose-dépendant (max 20mg)" },
+                            { test: "Natrémie", priority: "high", note: "Risque d'hyponatrémie" },
+                            { test: "Kaliémie, Magnésémie", priority: "medium", note: "Si risque de QT long" }
+                        ],
+                        ongoing: [
+                            { test: "ECG", frequency: "M1, puis /an si > 10mg", priority: "high" },
+                            { test: "Natrémie", frequency: "J15, M1, puis si signes", priority: "high" },
+                            { test: "Clinique", frequency: "M1, M3, puis /3-6 mois", priority: "medium" }
+                        ],
+                        warnings: ["Contre-indiqué si QTc > 500 ms", "Dose max 10 mg si > 65 ans ou insuffisance hépatique"]
+                    }
+                ]
+            },
+            irsn: {
+                title: "IRSNa - Inhibiteurs de la Recapture de la Sérotonine et Noradrénaline",
+                color: "teal",
+                icon: "zap",
+                drugs: [
+                    {
+                        name: "Venlafaxine",
+                        brand: "Effexor",
+                        doses: "75-375 mg/j",
+                        preTherapy: [
+                            { test: "PA, FC", priority: "high", note: "HTA dose-dépendante fréquente (> 150 mg)" },
+                            { test: "ECG", priority: "high", note: "Tachycardie, allongement QT" },
+                            { test: "Natrémie", priority: "high", note: "Risque d'hyponatrémie" },
+                            { test: "Bilan lipidique", priority: "medium", note: "Possible élévation cholestérol" }
+                        ],
+                        ongoing: [
+                            { test: "PA, FC", frequency: "Chaque consultation, puis /3 mois", priority: "high" },
+                            { test: "ECG", frequency: "M3, puis /an", priority: "medium" },
+                            { test: "Natrémie", frequency: "J15, M1, puis si signes", priority: "high" },
+                            { test: "Bilan lipidique", frequency: "/an", priority: "low" }
+                        ],
+                        warnings: ["Syndrome de sevrage majeur si arrêt brutal", "Contre-indiquée si HTA non contrôlée"]
+                    },
+                    {
+                        name: "Duloxétine",
+                        brand: "Cymbalta",
+                        doses: "60-120 mg/j",
+                        preTherapy: [
+                            { test: "PA", priority: "medium", note: "Élévation tensionnelle possible" },
+                            { test: "Bilan hépatique", priority: "high", note: "Contre-indiquée si insuffisance hépatique" },
+                            { test: "Créatinine, DFG", priority: "medium", note: "Contre-indiquée si DFG < 30" },
+                            { test: "Glycémie", priority: "medium", note: "Si diabète : modification équilibre glycémique" }
+                        ],
+                        ongoing: [
+                            { test: "PA", frequency: "/3 mois", priority: "medium" },
+                            { test: "Bilan hépatique", frequency: "M3, puis si signes", priority: "high" },
+                            { test: "Glycémie/HbA1c", frequency: "/3-6 mois si diabète", priority: "medium" }
+                        ],
+                        warnings: ["Hépatotoxicité possible", "Éviter si consommation d'alcool importante"]
+                    }
+                ]
+            },
+            autresAD: {
+                title: "Autres Antidépresseurs",
+                color: "indigo",
+                icon: "sparkles",
+                drugs: [
+                    {
+                        name: "Vortioxétine",
+                        brand: "Brintellix",
+                        doses: "10-20 mg/j",
+                        preTherapy: [
+                            { test: "Natrémie", priority: "medium", note: "Risque d'hyponatrémie (moindre que ISRS)" },
+                            { test: "Bilan hépatique", priority: "low", note: "Si terrain hépatique" }
+                        ],
+                        ongoing: [
+                            { test: "Natrémie", frequency: "M1, puis si signes", priority: "medium" },
+                            { test: "Clinique", frequency: "M1, M3, puis /3-6 mois", priority: "medium", note: "Effets GI fréquents (nausées)" }
+                        ],
+                        warnings: ["Profil d'effets secondaires globalement favorable", "Nausées dose-dépendantes fréquentes en début de traitement"]
+                    },
+                    {
+                        name: "Clomipramine",
+                        brand: "Anafranil",
+                        doses: "75-250 mg/j",
+                        preTherapy: [
+                            { test: "ECG", priority: "high", note: "Troubles de conduction, QT long, contre-indiqué si bloc, IDM récent" },
+                            { test: "Bilan hépatique", priority: "high", note: "Hépatotoxicité possible" },
+                            { test: "NFS", priority: "medium", note: "Agranulocytose rare" },
+                            { test: "PA, FC", priority: "high", note: "Hypotension orthostatique" },
+                            { test: "Glycémie", priority: "medium", note: "Variation glycémique possible" },
+                            { test: "Créatinine", priority: "low", note: "Rétention urinaire si insuffisance rénale" }
+                        ],
+                        ongoing: [
+                            { test: "ECG", frequency: "M1, M3, puis /6 mois", priority: "high" },
+                            { test: "PA couché/debout", frequency: "Chaque consultation", priority: "high" },
+                            { test: "Bilan hépatique", frequency: "M1, M3, puis /6 mois", priority: "high" },
+                            { test: "NFS", frequency: "M1, M3, puis si signes", priority: "medium" },
+                            { test: "Glycémie", frequency: "/6 mois si diabète", priority: "low" }
+                        ],
+                        warnings: ["Effets anticholinergiques majeurs (sécheresse, constipation, rétention, confusion)", "Risque de surdosage létal → attention si risque suicidaire", "Contre-indiqué avec IMAO, glaucome angle fermé, adénome prostate"]
+                    }
+                ]
+            },
+            antipsychotiques: {
+                title: "Antipsychotiques Atypiques",
+                color: "violet",
+                icon: "shield",
+                drugs: [
+                    {
+                        name: "Quétiapine",
+                        brand: "Xeroquel",
+                        doses: "150-800 mg/j",
+                        preTherapy: [
+                            { test: "Glycémie à jeun, HbA1c", priority: "high", note: "Risque diabétogène" },
+                            { test: "Bilan lipidique", priority: "high", note: "Dyslipidémie fréquente" },
+                            { test: "Poids, IMC, tour de taille", priority: "high", note: "Prise de poids significative" },
+                            { test: "PA", priority: "medium", note: "Hypotension orthostatique" },
+                            { test: "ECG", priority: "medium", note: "Allongement QT possible" },
+                            { test: "Bilan hépatique", priority: "low", note: "Élévation transaminases possible" },
+                            { test: "TSH", priority: "low", note: "Hypothyroïdie possible" }
+                        ],
+                        ongoing: [
+                            { test: "Glycémie/HbA1c", frequency: "M3, M6, puis /an", priority: "high" },
+                            { test: "Bilan lipidique", frequency: "M3, puis /an", priority: "high" },
+                            { test: "Poids, IMC", frequency: "Chaque consultation (M1, M3, M6, puis /6 mois)", priority: "high" },
+                            { test: "PA", frequency: "Chaque consultation", priority: "medium" },
+                            { test: "ECG", frequency: "/an", priority: "low" },
+                            { test: "TSH", frequency: "/an", priority: "low" }
+                        ],
+                        warnings: ["Sédation marquée (surtout en début)", "Surveillance métabolique stricte", "Risque de syndrome malin des neuroleptiques (rare)"]
+                    },
+                    {
+                        name: "Aripiprazole",
+                        brand: "Abilify",
+                        doses: "10-30 mg/j",
+                        preTherapy: [
+                            { test: "Glycémie à jeun", priority: "medium", note: "Risque métabolique moindre mais existant" },
+                            { test: "Bilan lipidique", priority: "medium", note: "Profil métabolique plus favorable" },
+                            { test: "Poids, IMC", priority: "medium", note: "Prise de poids limitée" }
+                        ],
+                        ongoing: [
+                            { test: "Glycémie", frequency: "M3, puis /an", priority: "medium" },
+                            { test: "Bilan lipidique", frequency: "/an", priority: "low" },
+                            { test: "Poids", frequency: "/3-6 mois", priority: "medium" },
+                            { test: "Clinique", frequency: "Chaque consultation", priority: "medium", note: "Akathisie fréquente, insomnie, agitation" }
+                        ],
+                        warnings: ["Akathisie fréquente (impatience motrice)", "Agoniste partiel D2 → peut aggraver psychose à faible dose", "Profil métabolique le plus favorable des AP2G"]
+                    },
+                    {
+                        name: "Olanzapine",
+                        brand: "Zyprexa",
+                        doses: "5-20 mg/j",
+                        preTherapy: [
+                            { test: "Glycémie à jeun, HbA1c", priority: "high", note: "Risque diabétogène MAJEUR" },
+                            { test: "Bilan lipidique", priority: "high", note: "Dyslipidémie très fréquente" },
+                            { test: "Poids, IMC, tour de taille", priority: "high", note: "Prise de poids majeure (5-10 kg fréquent)" },
+                            { test: "PA", priority: "medium", note: "Hypotension orthostatique" },
+                            { test: "NFS", priority: "low", note: "Leucopénie rare" },
+                            { test: "Bilan hépatique", priority: "medium", note: "Élévation transaminases possible" }
+                        ],
+                        ongoing: [
+                            { test: "Glycémie/HbA1c", frequency: "M1, M3, M6, puis /3-6 mois", priority: "high" },
+                            { test: "Bilan lipidique", frequency: "M3, M6, puis /6 mois", priority: "high" },
+                            { test: "Poids, IMC, tour de taille", frequency: "Chaque consultation+++", priority: "high" },
+                            { test: "PA", frequency: "Chaque consultation", priority: "medium" },
+                            { test: "Bilan hépatique", frequency: "M3, puis /an", priority: "medium" }
+                        ],
+                        warnings: ["RISQUE MÉTABOLIQUE LE PLUS ÉLEVÉ des AP2G", "Syndrome métabolique fréquent", "Sédation importante", "Mesures hygiéno-diététiques indispensables dès l'introduction"]
+                    },
+                    {
+                        name: "Rispéridone",
+                        brand: "Risperdal",
+                        doses: "2-6 mg/j",
+                        preTherapy: [
+                            { test: "Prolactinémie", priority: "high", note: "Hyperprolactinémie très fréquente" },
+                            { test: "Glycémie à jeun", priority: "medium", note: "Risque métabolique modéré" },
+                            { test: "Bilan lipidique", priority: "medium", note: "Dyslipidémie possible" },
+                            { test: "Poids, IMC", priority: "medium", note: "Prise de poids modérée" },
+                            { test: "ECG", priority: "medium", note: "Allongement QT possible" }
+                        ],
+                        ongoing: [
+                            { test: "Prolactinémie", frequency: "M3, M6, puis /an et si signes", priority: "high", note: "Gynécomastie, galactorrhée, aménorrhée, troubles sexuels" },
+                            { test: "Glycémie", frequency: "M3, puis /an", priority: "medium" },
+                            { test: "Bilan lipidique", frequency: "/an", priority: "medium" },
+                            { test: "Poids", frequency: "/3-6 mois", priority: "medium" },
+                            { test: "ECG", frequency: "/an", priority: "low" }
+                        ],
+                        warnings: ["Hyperprolactinémie quasi-systématique dose-dépendante", "Effets extrapyramidaux dose-dépendants", "Forme retard disponible (Risperdal Consta)"]
+                    }
+                ]
+            },
+            thymoregulateurs: {
+                title: "Thymorégulateurs",
+                color: "rose",
+                icon: "heart-pulse",
+                drugs: [
+                    {
+                        name: "Lamotrigine",
+                        brand: "Lamictal",
+                        doses: "100-400 mg/j",
+                        preTherapy: [
+                            { test: "Bilan hépatique", priority: "medium", note: "Hépatotoxicité rare" },
+                            { test: "Créatinine", priority: "low", note: "Adaptation si insuffisance rénale" }
+                        ],
+                        ongoing: [
+                            { test: "Surveillance cutanée", frequency: "Chaque consultation pendant 8 semaines+++", priority: "high", note: "Risque de DRESS, Stevens-Johnson, Lyell (1/1000)" },
+                            { test: "Bilan hépatique", frequency: "M3, puis /an", priority: "medium" },
+                            { test: "Clinique", frequency: "Chaque consultation", priority: "medium", note: "Signes systémiques (fièvre, ADP) = arrêt immédiat" }
+                        ],
+                        warnings: ["TITRATION TRÈS LENTE OBLIGATOIRE (risque cutané)", "Débuter 25 mg/j, ↑ 25 mg/2 sem (50 mg/j si valproate)", "Arrêt immédiat si éruption cutanée", "Risque majoré si association valproate", "Pas de dosage plasmatique en routine"]
+                    },
+                    {
+                        name: "Lithium",
+                        brand: "Téralithe",
+                        doses: "400-1200 mg/j (LP)",
+                        preTherapy: [
+                            { test: "Lithiémie de référence", priority: "high", note: "Marge thérapeutique étroite (0.5-0.8 mEq/L, max 1.2)" },
+                            { test: "Créatinine, DFG", priority: "high", note: "Contre-indiqué si DFG < 30, précaution si < 60" },
+                            { test: "Ionogramme (Na, K)", priority: "high", note: "Hyponatrémie ↑ toxicité lithium" },
+                            { test: "TSH, T4L", priority: "high", note: "Hypothyroïdie fréquente (20%)" },
+                            { test: "Calcémie, PTH", priority: "high", note: "Hyperparathyroïdie possible" },
+                            { test: "ECG", priority: "high", note: "Troubles de repolarisation, bradycardie sinusale" },
+                            { test: "NFS", priority: "medium", note: "Leucocytose bénigne fréquente" },
+                            { test: "β-hCG", priority: "high", note: "Contre-indication 1er trimestre (Ebstein)" }
+                        ],
+                        ongoing: [
+                            { test: "Lithiémie", frequency: "J5-J7, puis /sem pendant 1 mois, puis /mois × 3, puis /3 mois", priority: "high", note: "12h après dernière prise. Cible : 0.5-0.8 mEq/L" },
+                            { test: "Créatinine, DFG", frequency: "/3 mois la 1ère année, puis /6 mois", priority: "high" },
+                            { test: "TSH", frequency: "/6 mois", priority: "high" },
+                            { test: "Calcémie", frequency: "/an", priority: "medium" },
+                            { test: "ECG", frequency: "/an", priority: "medium" },
+                            { test: "Ionogramme", frequency: "/3-6 mois et si déshydratation", priority: "high" }
+                        ],
+                        warnings: ["MARGE THÉRAPEUTIQUE ÉTROITE - toxicité si > 1.2 mEq/L", "Lithiémie à contrôler si : diarrhée, vomissements, fièvre, déshydratation, introduction AINS/IEC/ARA2/diurétiques", "Signes de surdosage : tremblements majorés, troubles digestifs, confusion, dysarthrie", "Hydratation et apport sodé réguliers indispensables", "Contraception efficace obligatoire chez la femme"]
+                    }
+                ]
+            }
+        };
+
+        function getPriorityBadge(priority) {
+            const badges = {
+                high: '<span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-red-500" title="Surveillance stricte"></span>',
+                medium: '<span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-orange-500" title="Surveillance régulière"></span>',
+                low: '<span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-blue-500" title="Surveillance standard"></span>'
+            };
+            return badges[priority] || badges.low;
+        }
+
+        function renderContent(filter = "") {
+            const content = document.getElementById('content');
+            content.innerHTML = "";
+            const lowerFilter = filter.toLowerCase();
+
+            Object.entries(medications).forEach(([key, category]) => {
+                // Filtrer les médicaments de la catégorie
+                const filteredDrugs = category.drugs.filter(drug => {
+                    const searchText = `${drug.name} ${drug.brand} ${drug.doses}`.toLowerCase();
+                    return searchText.includes(lowerFilter);
+                });
+
+                if (filteredDrugs.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'category-section mb-8';
+
+                section.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-${category.color}-100 text-${category.color}-600 rounded-lg">
+                            <i data-lucide="${category.icon}" width="20" height="20"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-700">${category.title}</h2>
+                    </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        ${filteredDrugs.map(drug => renderDrugCard(drug, category.color)).join('')}
+                    </div>
+                `;
+
+                content.appendChild(section);
+            });
+
+            if (content.children.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-12 text-slate-400">
+                        <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                        <p>Aucun médicament trouvé pour "${filter}"</p>
+                    </div>
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        function renderDrugCard(drug, color) {
+            return `
+                <div class="drug-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200">
+                    <div class="h-1.5 bg-${color}-500"></div>
+                    <div class="p-5">
+                        <!-- En-tête médicament -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800">${drug.name}</h3>
+                                <p class="text-${color}-600 font-medium">${drug.brand}</p>
+                            </div>
+                            <span class="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-500 rounded">${drug.doses}</span>
+                        </div>
+
+                        <!-- Bilan pré-thérapeutique -->
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-400"></i>
+                                <h4 class="text-sm font-bold text-slate-600 uppercase tracking-wide">Bilan pré-thérapeutique</h4>
+                            </div>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <ul class="space-y-1.5 text-sm">
+                                    ${drug.preTherapy.map(item => `
+                                        <li class="flex items-start gap-2">
+                                            ${getPriorityBadge(item.priority)}
+                                            <span class="font-medium text-slate-700">${item.test}</span>
+                                            ${item.note ? `<span class="text-slate-500 text-xs">– ${item.note}</span>` : ''}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Surveillance en cours -->
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i>
+                                <h4 class="text-sm font-bold text-slate-600 uppercase tracking-wide">Surveillance en cours de traitement</h4>
+                            </div>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <div class="space-y-2 text-sm">
+                                    ${drug.ongoing.map(item => `
+                                        <div class="flex items-start gap-2">
+                                            ${getPriorityBadge(item.priority)}
+                                            <div class="flex-1">
+                                                <span class="font-medium text-slate-700">${item.test}</span>
+                                                <span class="text-${color}-600 text-xs ml-2">${item.frequency}</span>
+                                                ${item.note ? `<p class="text-slate-500 text-xs mt-0.5">${item.note}</p>` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Points d'attention -->
+                        ${drug.warnings && drug.warnings.length > 0 ? `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                                <h4 class="text-sm font-bold text-amber-600 uppercase tracking-wide">Points d'attention</h4>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-100 rounded-lg p-3">
+                                <ul class="space-y-1 text-xs text-amber-800">
+                                    ${drug.warnings.map(w => `<li class="flex items-start gap-1.5"><span class="text-amber-500 mt-0.5">•</span>${w}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialisation
+        renderContent();
+        lucide.createIcons();
+
+        // Recherche
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderContent(e.target.value);
+        });
+    </script>
+</body>
+</html>
