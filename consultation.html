@@ -65,6 +65,9 @@
             <button onclick="resetAll()" class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
                 <i data-lucide="rotate-ccw" width="14"></i> Réinitialiser
             </button>
+            <button onclick="openRecModal()" class="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow-sm transition-colors">
+                <i data-lucide="mic" width="14"></i> Enregistrer l'entretien
+            </button>
             <button onclick="window.print()" class="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors">
                 <i data-lucide="printer" width="14"></i> Imprimer
             </button>
@@ -781,132 +784,366 @@ window.onload = function() {
 };
 
 // =====================================================================
-//  DICTÉE VOCALE
+//  ENREGISTREMENT CONSULTATION — transcription + analyse Claude
 // =====================================================================
-let recognition = null;
-let micActive   = false;
-let micTarget   = null; // textarea/input ciblé
-let interimSpan = null;
+let recRecognition = null;
+let recActive      = false;
+let recFullText    = '';   // texte final accumulé
+let recTimerInt    = null;
+let recSeconds     = 0;
+let recTargetTab   = 'c1';
+let extractedData  = {};
 
 function initMic() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const fab = document.getElementById('mic-fab');
+    // Rien à initialiser ici, tout est dans le modal
+}
 
+function openRecModal() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SpeechRecognition) {
-        fab.title = 'Dictée non supportée par ce navigateur (utilisez Chrome ou Edge)';
-        fab.classList.add('opacity-40', 'cursor-not-allowed');
-        fab.onclick = () => alert('La dictée vocale nécessite Chrome ou Edge.');
+        alert('L\'enregistrement nécessite Chrome ou Edge.');
         return;
     }
+    // Synchroniser l'onglet actif
+    recTargetTab = document.getElementById('tab-c1').classList.contains('active') ? 'c1' : 'sv';
+    document.getElementById('rec-tab-c1').className = recTargetTab==='c1' ? 'rec-tab-btn rec-tab-active' : 'rec-tab-btn rec-tab-inactive';
+    document.getElementById('rec-tab-sv').className  = recTargetTab==='sv'  ? 'rec-tab-btn rec-tab-active' : 'rec-tab-btn rec-tab-inactive';
 
-    // Suivi du champ focalisé
-    document.addEventListener('focusin', e => {
-        if(e.target.matches('textarea, input[type="text"]')) {
-            micTarget = e.target;
-            if(!micActive) {
-                fab.title = `Dicter dans : ${micTarget.placeholder || micTarget.id}`;
+    // Reset état
+    recFullText = '';
+    recSeconds  = 0;
+    extractedData = {};
+    document.getElementById('rec-transcript-box').innerHTML = '<span class="text-gray-400 italic">La transcription apparaîtra ici dès que vous parlez…</span>';
+    document.getElementById('rec-interim').textContent = '';
+    document.getElementById('rec-timer').textContent = '00:00';
+    document.getElementById('rec-analyze-btn').classList.add('hidden');
+    document.getElementById('rec-preview').classList.add('hidden');
+    setRecBtn('idle');
+
+    document.getElementById('rec-modal').classList.remove('hidden');
+}
+
+function closeRecModal() {
+    stopRecording();
+    document.getElementById('rec-modal').classList.add('hidden');
+}
+
+function setRecTab(tab) {
+    recTargetTab = tab;
+    document.getElementById('rec-tab-c1').className = tab==='c1' ? 'rec-tab-btn rec-tab-active' : 'rec-tab-btn rec-tab-inactive';
+    document.getElementById('rec-tab-sv').className  = tab==='sv'  ? 'rec-tab-btn rec-tab-active' : 'rec-tab-btn rec-tab-inactive';
+}
+
+function setRecBtn(state) {
+    const btn = document.getElementById('rec-main-btn');
+    if(state === 'idle') {
+        btn.className = 'w-20 h-20 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center mx-auto shadow-xl transition-all';
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
+        btn.onclick = startRecording;
+        btn.title = 'Démarrer l\'enregistrement';
+    } else if(state === 'recording') {
+        btn.className = 'w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center mx-auto shadow-xl transition-all mic-pulse relative';
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
+        btn.onclick = stopRecording;
+        btn.title = 'Arrêter l\'enregistrement';
+    }
+}
+
+function startRecording() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recRecognition = new SpeechRecognition();
+    recRecognition.lang = 'fr-FR';
+    recRecognition.continuous = true;
+    recRecognition.interimResults = true;
+
+    recRecognition.onstart = () => {
+        recActive = true;
+        setRecBtn('recording');
+        document.getElementById('rec-status').textContent = 'Enregistrement en cours…';
+        document.getElementById('rec-transcript-box').innerHTML = '';
+        document.getElementById('rec-analyze-btn').classList.add('hidden');
+        document.getElementById('rec-preview').classList.add('hidden');
+        // Timer
+        recSeconds = 0;
+        recTimerInt = setInterval(() => {
+            recSeconds++;
+            const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+            const s = String(recSeconds%60).padStart(2,'0');
+            document.getElementById('rec-timer').textContent = `${m}:${s}`;
+        }, 1000);
+    };
+
+    recRecognition.onresult = e => {
+        let interim = '';
+        for(let i = e.resultIndex; i < e.results.length; i++) {
+            if(e.results[i].isFinal) {
+                const txt = e.results[i][0].transcript.trim();
+                recFullText += (recFullText ? ' ' : '') + txt;
+                // Afficher dans la box
+                const box = document.getElementById('rec-transcript-box');
+                const span = document.createElement('span');
+                span.textContent = txt + ' ';
+                box.appendChild(span);
+                box.scrollTop = box.scrollHeight;
+            } else {
+                interim += e.results[i][0].transcript;
             }
+        }
+        document.getElementById('rec-interim').textContent = interim;
+    };
+
+    recRecognition.onerror = e => {
+        if(e.error === 'not-allowed') {
+            stopRecording();
+            document.getElementById('rec-status').textContent = 'Accès au micro refusé.';
+        }
+        // no-speech et audio-capture sont ignorés (relance auto)
+    };
+
+    recRecognition.onend = () => {
+        if(recActive) recRecognition.start(); // relance continue
+    };
+
+    recRecognition.start();
+}
+
+function stopRecording() {
+    if(!recActive && !recRecognition) return;
+    recActive = false;
+    if(recRecognition) { recRecognition.onend = null; recRecognition.stop(); recRecognition = null; }
+    clearInterval(recTimerInt);
+    document.getElementById('rec-interim').textContent = '';
+    setRecBtn('idle');
+
+    if(recFullText.trim()) {
+        document.getElementById('rec-status').textContent = `Enregistrement terminé (${recSeconds}s) — ${recFullText.split(' ').length} mots`;
+        document.getElementById('rec-analyze-btn').classList.remove('hidden');
+    } else {
+        document.getElementById('rec-status').textContent = 'Aucun texte capturé.';
+    }
+}
+
+async function analyzeTranscript() {
+    const apiKey = getApiKey();
+    if(!apiKey) { alert('Veuillez d\'abord renseigner votre clé API Claude.'); return; }
+    if(!recFullText.trim()) { alert('Aucune transcription à analyser.'); return; }
+
+    const btn = document.getElementById('rec-analyze-btn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="animate-spin inline w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Analyse en cours…`;
+    document.getElementById('rec-status').textContent = 'Claude analyse la transcription…';
+
+    const isC1 = recTargetTab === 'c1';
+    const fieldsDesc = isC1
+        ? `{"motif":"motif principal de consultation (1-2 phrases)","anamnese":"histoire de la maladie, chronologie des troubles, facteurs déclenchants","atcd_psy":"antécédents psychiatriques personnels mentionnés","atcd_soma":"antécédents somatiques mentionnés","atcd_fam":"antécédents psychiatriques familiaux mentionnés","traitement":"traitements actuels mentionnés avec posologies si précisées","notes":"autres éléments cliniques pertinents (comportement, éléments d'examen, remarques)"}`
+        : `{"evolution":"évolution depuis la dernière consultation, symptômes persistants ou améliorés","ttt_modif":"modifications de traitement évoquées ou décidées","notes":"autres éléments cliniques, observations, événements intercurrents"}`;
+
+    const prompt = `Tu es un assistant médical. Voici la transcription d'une ${isC1 ? 'première consultation' : 'consultation de suivi'} psychiatrique.
+
+Extrais les éléments cliniques pertinents et réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans markdown.
+Les champs à remplir : ${fieldsDesc}
+
+Règles :
+- Si un élément n'est pas mentionné dans la transcription, laisser le champ vide ""
+- Reformuler en style médical concis (pas de verbatim)
+- Ne pas inventer d'informations absentes de la transcription
+
+Transcription :
+${recFullText}`;
+
+    try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 1024,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        if(!resp.ok) {
+            const err = await resp.json().catch(()=>({}));
+            throw new Error(err.error?.message || `Erreur HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        let raw = data.content[0].text.trim();
+        // Nettoyer si Claude enveloppe dans un bloc ```json
+        raw = raw.replace(/^```json?\n?/,'').replace(/\n?```$/,'').trim();
+        extractedData = JSON.parse(raw);
+        showPreview(extractedData);
+        document.getElementById('rec-status').textContent = 'Analyse terminée — vérifiez et appliquez ci-dessous.';
+
+    } catch(e) {
+        document.getElementById('rec-status').textContent = `Erreur : ${e.message}`;
+        alert(`Erreur lors de l'analyse :\n${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="sparkles" width="16" style="display:inline;margin-right:6px"></i>Analyser avec Claude`;
+        lucide.createIcons();
+    }
+}
+
+function showPreview(data) {
+    const isC1 = recTargetTab === 'c1';
+    const fields = isC1
+        ? [
+            { key:'motif',     label:'Motif de consultation' },
+            { key:'anamnese',  label:'Histoire de la maladie' },
+            { key:'atcd_psy',  label:'Antécédents psychiatriques' },
+            { key:'atcd_soma', label:'Antécédents somatiques' },
+            { key:'atcd_fam',  label:'Antécédents familiaux' },
+            { key:'traitement',label:'Traitement actuel' },
+            { key:'notes',     label:'Notes cliniques' },
+          ]
+        : [
+            { key:'evolution', label:'Évolution' },
+            { key:'ttt_modif', label:'Modifications traitement' },
+            { key:'notes',     label:'Notes cliniques' },
+          ];
+
+    const html = fields.map(f => {
+        const val = data[f.key] || '';
+        if(!val) return '';
+        return `
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">${f.label}</label>
+                <textarea id="prev-${f.key}" rows="3"
+                          class="w-full border border-violet-200 rounded-lg p-2 text-xs bg-violet-50 outline-none focus:ring-2 focus:ring-violet-400 resize-none">${val}</textarea>
+            </div>`;
+    }).join('');
+
+    const hasContent = fields.some(f => data[f.key]);
+    const preview = document.getElementById('rec-preview');
+    preview.innerHTML = hasContent
+        ? `<div class="border-t border-gray-200 pt-4 mt-2">
+               <h4 class="font-bold text-gray-700 text-sm mb-3 flex items-center gap-2">
+                   <i data-lucide="eye" width="14"></i> Aperçu — modifiez si nécessaire
+               </h4>
+               ${html}
+               <button onclick="applyExtracted()" class="w-full mt-2 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                   <i data-lucide="check-circle" width="16"></i> Remplir le formulaire
+               </button>
+           </div>`
+        : `<p class="text-sm text-gray-500 mt-3">Aucun élément extrait. Vérifiez la transcription.</p>`;
+
+    preview.classList.remove('hidden');
+    preview.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    lucide.createIcons();
+}
+
+function applyExtracted() {
+    const isC1 = recTargetTab === 'c1';
+    const map = isC1
+        ? { motif:'c1-motif', anamnese:'c1-anamnese', atcd_psy:'c1-atcd-psy',
+            atcd_soma:'c1-atcd-soma', atcd_fam:'c1-atcd-fam', traitement:'c1-traitement', notes:'c1-notes' }
+        : { evolution:'sv-evolution', ttt_modif:'sv-ttt-modif', notes:'sv-notes' };
+
+    Object.entries(map).forEach(([key, fieldId]) => {
+        const previewEl = document.getElementById(`prev-${key}`);
+        const val = previewEl ? previewEl.value : (extractedData[key] || '');
+        if(val) {
+            const field = document.getElementById(fieldId);
+            if(field) field.value = val;
         }
     });
 
-    fab.onclick = () => micActive ? stopMic() : startMic();
-}
+    // Basculer sur le bon onglet
+    switchTab(recTargetTab);
+    closeRecModal();
 
-function startMic() {
-    if(!micTarget) {
-        // Si aucun champ focalisé, cibler les notes du tab actif
-        const activeTab = document.querySelector('.tab-content.active');
-        micTarget = activeTab?.querySelector('textarea');
-        if(!micTarget) { alert('Cliquez d\'abord dans le champ où vous voulez dicter.'); return; }
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    // Zone de transcription en cours (texte grisé)
-    interimSpan = document.getElementById('mic-interim');
-
-    recognition.onstart = () => {
-        micActive = true;
-        const fab = document.getElementById('mic-fab');
-        fab.classList.remove('bg-green-600', 'hover:bg-green-700');
-        fab.classList.add('bg-red-500', 'hover:bg-red-600', 'mic-pulse');
-        fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-        document.getElementById('mic-status').textContent = `Dictée en cours…`;
-        document.getElementById('mic-toast').classList.remove('opacity-0', 'pointer-events-none');
-        micTarget.focus();
-    };
-
-    let finalBuffer = '';
-
-    recognition.onresult = e => {
-        let interim = '';
-        let finalNew = '';
-        for(let i = e.resultIndex; i < e.results.length; i++) {
-            if(e.results[i].isFinal) finalNew += e.results[i][0].transcript;
-            else interim += e.results[i][0].transcript;
-        }
-        if(finalNew) {
-            // Insérer au curseur ou en fin
-            const start = micTarget.selectionStart ?? micTarget.value.length;
-            const end   = micTarget.selectionEnd   ?? micTarget.value.length;
-            const before = micTarget.value.slice(0, start);
-            const after  = micTarget.value.slice(end);
-            const insert = (before && !before.endsWith(' ') && !before.endsWith('\n') ? ' ' : '') + finalNew;
-            micTarget.value = before + insert + after;
-            const pos = start + insert.length;
-            micTarget.setSelectionRange(pos, pos);
-        }
-        interimSpan.textContent = interim;
-    };
-
-    recognition.onerror = e => {
-        if(e.error !== 'no-speech') {
-            document.getElementById('mic-status').textContent = `Erreur : ${e.error}`;
-            setTimeout(stopMic, 1500);
-        }
-    };
-
-    recognition.onend = () => {
-        if(micActive) recognition.start(); // relance auto (continuous)
-    };
-
-    recognition.start();
-}
-
-function stopMic() {
-    micActive = false;
-    if(recognition) { recognition.onend = null; recognition.stop(); recognition = null; }
-    if(interimSpan) interimSpan.textContent = '';
-    const fab = document.getElementById('mic-fab');
-    fab.classList.remove('bg-red-500', 'hover:bg-red-600', 'mic-pulse');
-    fab.classList.add('bg-green-600', 'hover:bg-green-700');
-    fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    document.getElementById('mic-status').textContent = 'Appuyer pour dicter';
-    document.getElementById('mic-toast').classList.add('opacity-0', 'pointer-events-none');
+    // Flash visuel sur les champs remplis
+    setTimeout(() => {
+        Object.values(map).forEach(fieldId => {
+            const el = document.getElementById(fieldId);
+            if(el && el.value) {
+                el.style.transition = 'background-color .5s';
+                el.style.backgroundColor = '#f0fdf4';
+                setTimeout(() => el.style.backgroundColor = '', 1500);
+            }
+        });
+    }, 200);
 }
 </script>
 
-<!-- ===== MIC FLOATING BUTTON ===== -->
-<div class="no-print">
-    <!-- Toast indicateur -->
-    <div id="mic-toast"
-         class="fixed bottom-24 right-6 z-50 bg-gray-900 text-white text-xs rounded-xl px-4 py-2 shadow-xl opacity-0 pointer-events-none transition-opacity duration-200 max-w-[220px] text-center">
-        <span id="mic-status">Appuyer pour dicter</span><br>
-        <span id="mic-interim" class="text-gray-400 italic text-xs"></span>
+<!-- ===== MODAL ENREGISTREMENT ===== -->
+<div id="rec-modal" class="no-print hidden fixed inset-0 z-[60] flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+
+        <!-- Header modal -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center">
+                    <i data-lucide="mic" width="16" class="text-white"></i>
+                </div>
+                <h2 class="font-bold text-gray-800">Enregistrement de consultation</h2>
+            </div>
+            <button onclick="closeRecModal()" class="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors text-xl leading-none">&times;</button>
+        </div>
+
+        <div class="p-6 space-y-5">
+
+            <!-- Sélection onglet -->
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Remplir les champs de :</p>
+                <div class="flex gap-2">
+                    <button id="rec-tab-c1" onclick="setRecTab('c1')" class="rec-tab-btn rec-tab-active">1ère Consultation</button>
+                    <button id="rec-tab-sv"  onclick="setRecTab('sv')"  class="rec-tab-btn rec-tab-inactive">Suivi</button>
+                </div>
+            </div>
+
+            <!-- Bouton + timer -->
+            <div class="text-center space-y-3">
+                <button id="rec-main-btn" onclick="startRecording()"
+                        class="w-20 h-20 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center mx-auto shadow-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="9" y="3" width="6" height="11" rx="3"/>
+                        <path d="M5 10a7 7 0 0 0 14 0" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="12" y1="19" x2="12" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="font-mono text-2xl font-bold text-gray-700" id="rec-timer">00:00</div>
+                <p id="rec-status" class="text-sm text-gray-500">Appuyez pour démarrer l'enregistrement</p>
+            </div>
+
+            <!-- Transcription live -->
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Transcription en direct</p>
+                    <button onclick="recFullText='';document.getElementById('rec-transcript-box').innerHTML='<span class=&quot;text-gray-400 italic&quot;>Effacé.</span>';"
+                            class="text-xs text-gray-400 hover:text-red-500 transition-colors">Effacer</button>
+                </div>
+                <div id="rec-transcript-box"
+                     class="h-48 overflow-y-auto border border-gray-200 rounded-xl p-3 text-sm bg-gray-50 leading-relaxed text-gray-700">
+                    <span class="text-gray-400 italic">La transcription apparaîtra ici dès que vous parlez…</span>
+                </div>
+                <p id="rec-interim" class="text-xs text-gray-400 italic mt-1 min-h-[16px]"></p>
+            </div>
+
+            <!-- Bouton analyser -->
+            <button id="rec-analyze-btn" onclick="analyzeTranscript()"
+                    class="hidden w-full py-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-300 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="sparkles" width="16"></i> Analyser avec Claude et extraire les éléments
+            </button>
+
+            <!-- Preview + Apply -->
+            <div id="rec-preview" class="hidden"></div>
+
+        </div>
     </div>
-    <!-- FAB -->
-    <button id="mic-fab" title="Dicter dans le champ actif"
-            class="fixed bottom-6 right-6 z-50 relative w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-2xl flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="9" y="3" width="6" height="11" rx="3"/>
-            <path d="M5 10a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-    </button>
 </div>
+
+<style>
+    .rec-tab-btn    { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; transition: all .15s; border: 2px solid transparent; }
+    .rec-tab-active { background: #ede9fe; color: #7c3aed; border-color: #c4b5fd; }
+    .rec-tab-inactive { color: #64748b; background: #f1f5f9; }
+    .rec-tab-inactive:hover { background: #e2e8f0; }
+</style>
 </body>
 </html>
