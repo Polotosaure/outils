@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courrier de Sortie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .print-only { display: block !important; }
+            .shadow-sm, .shadow-md { box-shadow: none !important; }
+            .result-section { border: 1px solid #e2e8f0 !important; break-inside: avoid; }
+            textarea { border: none !important; background: transparent !important; resize: none; overflow: hidden; }
+            textarea::placeholder { color: transparent; }
+        }
+        .print-only { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        textarea { resize: vertical; }
+        .section-generated textarea {
+            min-height: 80px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+<!-- ===== HEADER ===== -->
+<div class="no-print sticky top-0 z-50 bg-white border-b shadow-md p-3 mb-6">
+    <div class="max-w-4xl mx-auto flex justify-between items-center gap-3">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
+                <i data-lucide="arrow-left" width="20"></i>
+            </a>
+            <div class="bg-orange-600 p-2 rounded-lg text-white">
+                <i data-lucide="file-output" width="20"></i>
+            </div>
+            <h1 class="text-lg font-bold text-slate-800">Courrier de Sortie</h1>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="resetAll()" class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                <i data-lucide="rotate-ccw" width="14"></i> Réinitialiser
+            </button>
+            <button onclick="window.print()" class="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-lg shadow-sm transition-colors">
+                <i data-lucide="printer" width="14"></i> Imprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 pb-20">
+
+    <!-- ===== API KEY ===== -->
+    <div id="api-config-banner" class="no-print bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+        <div class="flex items-start gap-3">
+            <i data-lucide="key" width="16" class="text-amber-600 mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1">
+                <p class="text-xs font-bold text-amber-800 mb-2 uppercase tracking-wide">Clé API Claude — stockée uniquement dans votre navigateur</p>
+                <div class="flex gap-2">
+                    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..."
+                           class="flex-1 border border-amber-300 rounded-lg p-2 text-xs bg-white focus:ring-2 focus:ring-amber-400 outline-none font-mono">
+                    <button onclick="saveApiKey()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap">
+                        Enregistrer
+                    </button>
+                </div>
+                <p id="api-key-status" class="text-xs text-amber-700 mt-1.5"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PATIENT INFO ===== -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <i data-lucide="user" width="14"></i> Patient
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nom / Prénom</label>
+                <input type="text" id="patient-nom" placeholder="Nom Prénom"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date de naissance</label>
+                <input type="date" id="patient-ddn"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date d'entrée</label>
+                <input type="date" id="hospit-entree"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date de sortie</label>
+                <input type="date" id="hospit-sortie"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Service / Unité</label>
+                <input type="text" id="hospit-service" placeholder="ex. Psychiatrie adulte"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Médecin destinataire</label>
+                <input type="text" id="destinataire" placeholder="Dr. Nom du destinataire"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== OBSERVATIONS ===== -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <i data-lucide="clipboard" width="14"></i> Observations d'hospitalisation
+        </h2>
+        <p class="text-xs text-slate-400 mb-3">Collez ici les notes de l'équipe, les comptes-rendus, les transmissions infirmières, les bilans, etc. Claude synthétisera ces données dans les sections du courrier.</p>
+        <textarea id="observations" rows="14"
+                  placeholder="Collez vos observations d'hospitalisation ici…&#10;&#10;Exemples : notes d'entrée, évolution clinique, bilans biologiques, traitements essayés, événements significatifs, état à la sortie..."
+                  class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-400 outline-none font-mono leading-relaxed"></textarea>
+    </div>
+
+    <!-- ===== GENERATE BUTTON ===== -->
+    <div class="no-print flex justify-center mb-6">
+        <button id="gen-btn" onclick="generateCourrier()"
+                class="flex items-center gap-2 px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-md transition-colors text-base">
+            <i data-lucide="sparkles" width="20"></i>
+            Générer le courrier avec Claude
+        </button>
+    </div>
+
+    <!-- ===== RESULT SECTIONS ===== -->
+    <div id="result-container" class="space-y-4" style="display:none">
+
+        <!-- En-tête du courrier (print only) -->
+        <div class="print-only bg-white rounded-xl border border-slate-200 p-6 mb-2">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-bold text-slate-800 text-lg" id="print-nom"></p>
+                    <p class="text-sm text-slate-500" id="print-ddn"></p>
+                </div>
+                <div class="text-right text-sm text-slate-500">
+                    <p id="print-service"></p>
+                    <p id="print-dates"></p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-200">
+                <p class="text-sm text-slate-600">Confrère(sse),</p>
+                <p class="text-sm text-slate-600 mt-1" id="print-destinataire-line"></p>
+            </div>
+        </div>
+
+        <!-- Section 1 : Motif d'hospitalisation -->
+        <div class="result-section bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden">
+            <div class="bg-orange-50 border-b border-orange-200 px-5 py-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                <h3 class="text-sm font-bold text-orange-800 uppercase tracking-wide">Motif d'hospitalisation</h3>
+                <button onclick="copySection('s-motif')" class="no-print ml-auto p-1.5 text-orange-400 hover:text-orange-600 hover:bg-orange-100 rounded transition-colors" title="Copier">
+                    <i data-lucide="copy" width="14"></i>
+                </button>
+            </div>
+            <div class="section-generated p-4">
+                <textarea id="s-motif" rows="4" placeholder="Le motif d'hospitalisation apparaîtra ici…"
+                          class="w-full text-sm text-slate-700 border-0 outline-none bg-transparent p-0 leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- Section 2 : Synthèse clinique -->
+        <div class="result-section bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden">
+            <div class="bg-orange-50 border-b border-orange-200 px-5 py-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                <h3 class="text-sm font-bold text-orange-800 uppercase tracking-wide">Synthèse clinique</h3>
+                <button onclick="copySection('s-synthese')" class="no-print ml-auto p-1.5 text-orange-400 hover:text-orange-600 hover:bg-orange-100 rounded transition-colors" title="Copier">
+                    <i data-lucide="copy" width="14"></i>
+                </button>
+            </div>
+            <div class="section-generated p-4">
+                <textarea id="s-synthese" rows="8" placeholder="La synthèse clinique de l'hospitalisation apparaîtra ici…"
+                          class="w-full text-sm text-slate-700 border-0 outline-none bg-transparent p-0 leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- Section 3 : Mode de vie -->
+        <div class="result-section bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden">
+            <div class="bg-orange-50 border-b border-orange-200 px-5 py-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+                <h3 class="text-sm font-bold text-orange-800 uppercase tracking-wide">Mode de vie / Contexte social</h3>
+                <button onclick="copySection('s-vie')" class="no-print ml-auto p-1.5 text-orange-400 hover:text-orange-600 hover:bg-orange-100 rounded transition-colors" title="Copier">
+                    <i data-lucide="copy" width="14"></i>
+                </button>
+            </div>
+            <div class="section-generated p-4">
+                <textarea id="s-vie" rows="4" placeholder="Les éléments de mode de vie et de contexte social apparaîtront ici…"
+                          class="w-full text-sm text-slate-700 border-0 outline-none bg-transparent p-0 leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- Section 4 : Suite de la prise en charge -->
+        <div class="result-section bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden">
+            <div class="bg-orange-50 border-b border-orange-200 px-5 py-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-orange-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">4</span>
+                <h3 class="text-sm font-bold text-orange-800 uppercase tracking-wide">Suite de la prise en charge</h3>
+                <button onclick="copySection('s-suite')" class="no-print ml-auto p-1.5 text-orange-400 hover:text-orange-600 hover:bg-orange-100 rounded transition-colors" title="Copier">
+                    <i data-lucide="copy" width="14"></i>
+                </button>
+            </div>
+            <div class="section-generated p-4">
+                <textarea id="s-suite" rows="5" placeholder="Les recommandations de suivi et le plan thérapeutique apparaîtront ici…"
+                          class="w-full text-sm text-slate-700 border-0 outline-none bg-transparent p-0 leading-relaxed"></textarea>
+            </div>
+        </div>
+
+        <!-- Pied de courrier -->
+        <div class="result-section bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <p class="text-sm text-slate-500 italic">Nous restons disponibles pour tout renseignement complémentaire.</p>
+            <p class="text-sm text-slate-500 mt-3">Confraternellement,</p>
+        </div>
+
+        <!-- Message erreur (caché par défaut) -->
+        <div id="error-box" class="no-print bg-red-50 border border-red-200 rounded-xl p-4" style="display:none">
+            <p class="text-sm text-red-700 font-medium" id="error-msg"></p>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+// =====================================================================
+//  API KEY
+// =====================================================================
+function saveApiKey() {
+    const key = document.getElementById('api-key-input').value.trim();
+    if (!key.startsWith('sk-ant-')) {
+        document.getElementById('api-key-status').textContent = '⚠ Format incorrect (doit commencer par sk-ant-)';
+        return;
+    }
+    localStorage.setItem('claude_api_key', key);
+    document.getElementById('api-key-status').textContent = '✓ Clé enregistrée dans votre navigateur';
+    document.getElementById('api-key-input').value = '';
+}
+
+function getApiKey() { return localStorage.getItem('claude_api_key') || ''; }
+
+// Afficher statut de la clé au chargement
+window.addEventListener('DOMContentLoaded', () => {
+    if (getApiKey()) {
+        document.getElementById('api-key-status').textContent = '✓ Clé déjà enregistrée';
+    }
+});
+
+// =====================================================================
+//  BUILD PROMPT
+// =====================================================================
+function buildPrompt() {
+    const nom      = document.getElementById('patient-nom').value    || 'Non renseigné';
+    const ddn      = document.getElementById('patient-ddn').value    || '';
+    const entree   = document.getElementById('hospit-entree').value  || '';
+    const sortie   = document.getElementById('hospit-sortie').value  || '';
+    const service  = document.getElementById('hospit-service').value || '';
+    const obs      = document.getElementById('observations').value   || '';
+
+    let ctx = `Patient : ${nom}`;
+    if (ddn) ctx += `, né(e) le ${ddn}`;
+    ctx += '\n';
+    if (service) ctx += `Service : ${service}\n`;
+    if (entree)  ctx += `Date d'entrée : ${entree}\n`;
+    if (sortie)  ctx += `Date de sortie : ${sortie}\n`;
+    ctx += '\n';
+    ctx += `OBSERVATIONS D'HOSPITALISATION :\n${obs}\n`;
+
+    return `Tu es un assistant médical pour un psychiatre francophone. À partir des observations d'hospitalisation ci-dessous, rédige un courrier de sortie psychiatrique structuré en exactement 4 sections.
+
+Consignes générales :
+- Style médical francophone professionnel, phrases claires et précises
+- Texte brut uniquement — pas de formatage Markdown (pas de **, *, #, tirets de liste)
+- Si une information est absente des observations, rédige la section en conséquence sans inventer
+
+Retourne ta réponse sous ce format exact (respecte scrupuleusement les balises) :
+
+[MOTIF]
+Texte de la section motif d'hospitalisation (2 à 4 phrases : contexte, circonstances d'admission, modalité d'entrée)
+[/MOTIF]
+
+[SYNTHESE]
+Texte de la synthèse clinique (évolution pendant l'hospitalisation, état clinique à l'entrée et à la sortie, traitements instaurés ou modifiés, bilans réalisés, événements notables)
+[/SYNTHESE]
+
+[VIE]
+Texte du mode de vie et contexte social (situation familiale, logement, entourage, autonomie, activité professionnelle ou occupationnelle, facteurs psychosociaux pertinents)
+[/VIE]
+
+[SUITE]
+Texte de la suite de la prise en charge (traitement de sortie, ordonnances, consultations programmées, suivi ambulatoire, recommandations, signes d'alarme à surveiller)
+[/SUITE]
+
+Données :
+${ctx}`;
+}
+
+// =====================================================================
+//  PARSE RESPONSE
+// =====================================================================
+function parseResponse(text) {
+    const extract = (tag) => {
+        const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)\\[\\/${tag}\\]`, 'i');
+        const m = text.match(re);
+        return m ? m[1].trim() : '';
+    };
+    return {
+        motif:   extract('MOTIF'),
+        synthese: extract('SYNTHESE'),
+        vie:     extract('VIE'),
+        suite:   extract('SUITE'),
+    };
+}
+
+// =====================================================================
+//  GENERATE
+// =====================================================================
+async function generateCourrier() {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        alert('Veuillez d\'abord renseigner votre clé API Claude dans le champ en haut de page.');
+        return;
+    }
+    const obs = document.getElementById('observations').value.trim();
+    if (!obs) {
+        alert('Veuillez coller les observations d\'hospitalisation avant de générer le courrier.');
+        return;
+    }
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="animate-spin" style="width:20px;height:20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>&nbsp;Génération en cours…`;
+
+    document.getElementById('error-box').style.display = 'none';
+
+    try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: buildPrompt() }]
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `Erreur HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const text = data.content?.[0]?.text || '';
+        const sections = parseResponse(text);
+
+        document.getElementById('s-motif').value   = sections.motif;
+        document.getElementById('s-synthese').value = sections.synthese;
+        document.getElementById('s-vie').value      = sections.vie;
+        document.getElementById('s-suite').value    = sections.suite;
+
+        // Mise à jour des champs print
+        updatePrintHeader();
+
+        // Afficher le résultat
+        document.getElementById('result-container').style.display = 'block';
+        document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (e) {
+        document.getElementById('error-box').style.display = 'block';
+        document.getElementById('error-msg').textContent = '⚠ Erreur : ' + e.message;
+        document.getElementById('result-container').style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="sparkles" width="20"></i>&nbsp;Régénérer le courrier`;
+        lucide.createIcons();
+    }
+}
+
+// =====================================================================
+//  PRINT HEADER
+// =====================================================================
+function updatePrintHeader() {
+    const nom     = document.getElementById('patient-nom').value    || '';
+    const ddn     = document.getElementById('patient-ddn').value    || '';
+    const entree  = document.getElementById('hospit-entree').value  || '';
+    const sortie  = document.getElementById('hospit-sortie').value  || '';
+    const service = document.getElementById('hospit-service').value || '';
+    const dest    = document.getElementById('destinataire').value   || '';
+
+    document.getElementById('print-nom').textContent = nom;
+    document.getElementById('print-ddn').textContent = ddn ? 'Né(e) le ' + formatDate(ddn) : '';
+    document.getElementById('print-service').textContent = service;
+
+    let dates = '';
+    if (entree) dates += 'Entrée : ' + formatDate(entree);
+    if (sortie) dates += (entree ? ' — ' : '') + 'Sortie : ' + formatDate(sortie);
+    document.getElementById('print-dates').textContent = dates;
+
+    document.getElementById('print-destinataire-line').textContent = dest
+        ? `Je vous adresse ce courrier concernant ${nom || 'notre patient(e)'} hospitalisé(e) dans notre service du ${formatDate(entree)} au ${formatDate(sortie)}.`
+        : '';
+}
+
+function formatDate(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+// =====================================================================
+//  COPY SECTION
+// =====================================================================
+function copySection(id) {
+    const text = document.getElementById(id).value;
+    navigator.clipboard.writeText(text).then(() => {
+        // Flash feedback
+        const btn = event.currentTarget;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        setTimeout(() => { btn.innerHTML = orig; lucide.createIcons(); }, 1500);
+    });
+}
+
+// =====================================================================
+//  RESET
+// =====================================================================
+function resetAll() {
+    if (!confirm('Effacer toutes les données ?')) return;
+    ['patient-nom','patient-ddn','hospit-entree','hospit-sortie','hospit-service','destinataire','observations',
+     's-motif','s-synthese','s-vie','s-suite'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('result-container').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+    const btn = document.getElementById('gen-btn');
+    btn.innerHTML = `<i data-lucide="sparkles" width="20"></i>&nbsp;Générer le courrier avec Claude`;
+    lucide.createIcons();
+}
+
+lucide.createIcons();
+</script>
+</body>
+</html>
