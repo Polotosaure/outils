@@ -188,8 +188,13 @@ function getApiKey() { return localStorage.getItem('claude_api_key') || ''; }
 
 // Afficher statut de la clé au chargement
 window.addEventListener('DOMContentLoaded', () => {
-    if (getApiKey()) {
-        document.getElementById('api-key-status').textContent = '✓ Clé déjà enregistrée';
+    const key = getApiKey();
+    const proto = location.protocol;
+    const isFile = proto === 'file:';
+    if (key) {
+        document.getElementById('api-key-status').textContent = `✓ Clé enregistrée (${key.slice(0,14)}…) | Protocole : ${proto}${isFile ? ' ⚠ file:// détecté — préférez https://' : ''}`;
+    } else {
+        document.getElementById('api-key-status').textContent = `Aucune clé enregistrée | Protocole : ${proto}${isFile ? ' ⚠ file:// — préférez https://' : ''}`;
     }
 });
 
@@ -302,16 +307,15 @@ async function generateCourrier() {
         document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     } catch (e) {
-        let msg = '⚠ Erreur : ' + e.message;
-        if (e.message.toLowerCase().includes('networkerror') || e.message.toLowerCase().includes('fetch')) {
-            const isFirefox = navigator.userAgent.includes('Firefox');
-            const isFileProtocol = location.protocol === 'file:';
-            if (isFirefox && isFileProtocol) {
-                msg = '⚠ Firefox bloque les appels API depuis un fichier local. Ouvrez cette page via Chrome/Edge, ou accédez-y via l\'URL GitHub Pages (https://).';
-            } else if (isFileProtocol) {
-                msg = '⚠ Erreur réseau. Essayez d\'accéder à cette page via une URL https:// plutôt qu\'en ouvrant le fichier directement.';
+        const isFirefox = navigator.userAgent.includes('Firefox');
+        const isFileProtocol = location.protocol === 'file:';
+        let msg = `⚠ Erreur : ${e.message}\n`;
+        msg += `Protocole : ${location.protocol} | Navigateur : ${isFirefox ? 'Firefox' : 'Autre'}\n`;
+        if (e.message.toLowerCase().includes('networkerror') || e.message.toLowerCase().includes('fetch') || e.message.toLowerCase().includes('failed')) {
+            if (isFileProtocol) {
+                msg += '\n→ Vous ouvrez le fichier en local (file://). Accédez à la page via votre URL GitHub Pages (https://...) ou utilisez Chrome/Edge.';
             } else {
-                msg = '⚠ Erreur réseau. Vérifiez votre connexion internet et que votre clé API est valide.';
+                msg += '\n→ Vérifiez votre connexion internet et que votre clé API est valide (Tableau de bord Anthropic → API Keys).';
             }
         }
         document.getElementById('error-box').style.display = 'block';
