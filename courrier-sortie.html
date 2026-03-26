@@ -302,8 +302,20 @@ async function generateCourrier() {
         document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     } catch (e) {
+        let msg = '⚠ Erreur : ' + e.message;
+        if (e.message.toLowerCase().includes('networkerror') || e.message.toLowerCase().includes('fetch')) {
+            const isFirefox = navigator.userAgent.includes('Firefox');
+            const isFileProtocol = location.protocol === 'file:';
+            if (isFirefox && isFileProtocol) {
+                msg = '⚠ Firefox bloque les appels API depuis un fichier local. Ouvrez cette page via Chrome/Edge, ou accédez-y via l\'URL GitHub Pages (https://).';
+            } else if (isFileProtocol) {
+                msg = '⚠ Erreur réseau. Essayez d\'accéder à cette page via une URL https:// plutôt qu\'en ouvrant le fichier directement.';
+            } else {
+                msg = '⚠ Erreur réseau. Vérifiez votre connexion internet et que votre clé API est valide.';
+            }
+        }
         document.getElementById('error-box').style.display = 'block';
-        document.getElementById('error-msg').textContent = '⚠ Erreur : ' + e.message;
+        document.getElementById('error-msg').textContent = msg;
         document.getElementById('result-container').style.display = 'block';
     } finally {
         btn.disabled = false;
