@@ -71,45 +71,6 @@
         </div>
     </div>
 
-    <!-- ===== PATIENT INFO ===== -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <i data-lucide="user" width="14"></i> Patient
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nom / Prénom</label>
-                <input type="text" id="patient-nom" placeholder="Nom Prénom"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date de naissance</label>
-                <input type="date" id="patient-ddn"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date d'entrée</label>
-                <input type="date" id="hospit-entree"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Date de sortie</label>
-                <input type="date" id="hospit-sortie"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Service / Unité</label>
-                <input type="text" id="hospit-service" placeholder="ex. Psychiatrie adulte"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Médecin destinataire</label>
-                <input type="text" id="destinataire" placeholder="Dr. Nom du destinataire"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none">
-            </div>
-        </div>
-    </div>
-
     <!-- ===== OBSERVATIONS ===== -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -132,24 +93,6 @@
 
     <!-- ===== RESULT SECTIONS ===== -->
     <div id="result-container" class="space-y-4" style="display:none">
-
-        <!-- En-tête du courrier (print only) -->
-        <div class="print-only bg-white rounded-xl border border-slate-200 p-6 mb-2">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="font-bold text-slate-800 text-lg" id="print-nom"></p>
-                    <p class="text-sm text-slate-500" id="print-ddn"></p>
-                </div>
-                <div class="text-right text-sm text-slate-500">
-                    <p id="print-service"></p>
-                    <p id="print-dates"></p>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-slate-200">
-                <p class="text-sm text-slate-600">Confrère(sse),</p>
-                <p class="text-sm text-slate-600 mt-1" id="print-destinataire-line"></p>
-            </div>
-        </div>
 
         <!-- Section 1 : Motif d'hospitalisation -->
         <div class="result-section bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden">
@@ -254,21 +197,8 @@ window.addEventListener('DOMContentLoaded', () => {
 //  BUILD PROMPT
 // =====================================================================
 function buildPrompt() {
-    const nom      = document.getElementById('patient-nom').value    || 'Non renseigné';
-    const ddn      = document.getElementById('patient-ddn').value    || '';
-    const entree   = document.getElementById('hospit-entree').value  || '';
-    const sortie   = document.getElementById('hospit-sortie').value  || '';
-    const service  = document.getElementById('hospit-service').value || '';
-    const obs      = document.getElementById('observations').value   || '';
-
-    let ctx = `Patient : ${nom}`;
-    if (ddn) ctx += `, né(e) le ${ddn}`;
-    ctx += '\n';
-    if (service) ctx += `Service : ${service}\n`;
-    if (entree)  ctx += `Date d'entrée : ${entree}\n`;
-    if (sortie)  ctx += `Date de sortie : ${sortie}\n`;
-    ctx += '\n';
-    ctx += `OBSERVATIONS D'HOSPITALISATION :\n${obs}\n`;
+    const obs = document.getElementById('observations').value || '';
+    const ctx = `OBSERVATIONS D'HOSPITALISATION :\n${obs}\n`;
 
     return `Tu es un assistant médical pour un psychiatre francophone. À partir des observations d'hospitalisation ci-dessous, rédige un courrier de sortie psychiatrique structuré en exactement 4 sections.
 
@@ -367,9 +297,6 @@ async function generateCourrier() {
         document.getElementById('s-vie').value      = sections.vie;
         document.getElementById('s-suite').value    = sections.suite;
 
-        // Mise à jour des champs print
-        updatePrintHeader();
-
         // Afficher le résultat
         document.getElementById('result-container').style.display = 'block';
         document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -383,37 +310,6 @@ async function generateCourrier() {
         btn.innerHTML = `<i data-lucide="sparkles" width="20"></i>&nbsp;Régénérer le courrier`;
         lucide.createIcons();
     }
-}
-
-// =====================================================================
-//  PRINT HEADER
-// =====================================================================
-function updatePrintHeader() {
-    const nom     = document.getElementById('patient-nom').value    || '';
-    const ddn     = document.getElementById('patient-ddn').value    || '';
-    const entree  = document.getElementById('hospit-entree').value  || '';
-    const sortie  = document.getElementById('hospit-sortie').value  || '';
-    const service = document.getElementById('hospit-service').value || '';
-    const dest    = document.getElementById('destinataire').value   || '';
-
-    document.getElementById('print-nom').textContent = nom;
-    document.getElementById('print-ddn').textContent = ddn ? 'Né(e) le ' + formatDate(ddn) : '';
-    document.getElementById('print-service').textContent = service;
-
-    let dates = '';
-    if (entree) dates += 'Entrée : ' + formatDate(entree);
-    if (sortie) dates += (entree ? ' — ' : '') + 'Sortie : ' + formatDate(sortie);
-    document.getElementById('print-dates').textContent = dates;
-
-    document.getElementById('print-destinataire-line').textContent = dest
-        ? `Je vous adresse ce courrier concernant ${nom || 'notre patient(e)'} hospitalisé(e) dans notre service du ${formatDate(entree)} au ${formatDate(sortie)}.`
-        : '';
-}
-
-function formatDate(iso) {
-    if (!iso) return '';
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
 }
 
 // =====================================================================
@@ -435,8 +331,7 @@ function copySection(id) {
 // =====================================================================
 function resetAll() {
     if (!confirm('Effacer toutes les données ?')) return;
-    ['patient-nom','patient-ddn','hospit-entree','hospit-sortie','hospit-service','destinataire','observations',
-     's-motif','s-synthese','s-vie','s-suite'].forEach(id => {
+    ['observations','s-motif','s-synthese','s-vie','s-suite'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
