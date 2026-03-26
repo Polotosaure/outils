@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant de Consultation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            input, textarea { border: none !important; background: transparent !important; resize: none; }
+            input::placeholder, textarea::placeholder { color: transparent; }
+        }
+        .option-card { transition: all 0.2s; cursor: pointer; }
+        .option-card:hover { background-color: #f3f4f6; }
+        .sel-0  { background-color: #ecfdf5; border-color: #10b981 !important; color: #065f46; }
+        .sel-2  { background-color: #eff6ff; border-color: #3b82f6 !important; color: #1e40af; }
+        .sel-4  { background-color: #fff7ed; border-color: #f97316 !important; color: #9a3412; }
+        .sel-6  { background-color: #fef2f2; border-color: #ef4444 !important; color: #991b1b; }
+        .score-btn {
+            width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 9999px; font-weight: bold; font-size: 12px;
+            border: 2px solid #e5e7eb; transition: all 0.2s; cursor: pointer;
+        }
+        .tab-active   { border-bottom: 3px solid #16a34a; color: #16a34a; font-weight: 700; }
+        .tab-inactive { color: #64748b; border-bottom: 3px solid transparent; }
+        .tab-content  { display: none; }
+        .tab-content.active { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen text-gray-800">
+
+<!-- ===== HEADER ===== -->
+<div class="no-print sticky top-0 z-50 bg-white border-b shadow-md p-3 mb-6">
+    <div class="max-w-4xl mx-auto flex justify-between items-center gap-3">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
+                <i data-lucide="arrow-left" width="20"></i>
+            </a>
+            <div class="bg-green-600 p-2 rounded-lg text-white">
+                <i data-lucide="clipboard-list" width="20"></i>
+            </div>
+            <h1 class="text-lg font-bold text-gray-800">Assistant de Consultation</h1>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="resetAll()" class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                <i data-lucide="rotate-ccw" width="14"></i> Réinitialiser
+            </button>
+            <button onclick="window.print()" class="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors">
+                <i data-lucide="printer" width="14"></i> Imprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 pb-20">
+
+    <!-- ===== PATIENT INFO ===== -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <i data-lucide="user" width="14"></i> Patient
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nom / Prénom</label>
+                <input type="text" id="patient-nom" placeholder="Nom Prénom"
+                       class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Date de naissance</label>
+                <input type="date" id="patient-ddn"
+                       class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Date de consultation</label>
+                <input type="date" id="patient-date"
+                       class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== API KEY ===== -->
+    <div id="api-config-banner" class="no-print bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+        <div class="flex items-start gap-3">
+            <i data-lucide="key" width="16" class="text-amber-600 mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1">
+                <p class="text-xs font-bold text-amber-800 mb-2 uppercase tracking-wide">Clé API Claude — stockée uniquement dans votre navigateur</p>
+                <div class="flex gap-2">
+                    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..."
+                           class="flex-1 border border-amber-300 rounded-lg p-2 text-xs bg-white focus:ring-2 focus:ring-amber-400 outline-none font-mono">
+                    <button onclick="saveApiKey()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap">
+                        Enregistrer
+                    </button>
+                </div>
+                <p id="api-key-status" class="text-xs text-amber-700 mt-1.5"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABS ===== -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+
+        <!-- Tab nav -->
+        <div class="no-print border-b border-gray-200 flex">
+            <button onclick="switchTab('c1')" id="tab-btn-c1"
+                    class="px-6 py-4 text-sm transition-all tab-active flex items-center gap-2">
+                <i data-lucide="user-plus" width="16"></i> 1ère Consultation
+            </button>
+            <button onclick="switchTab('sv')" id="tab-btn-sv"
+                    class="px-6 py-4 text-sm transition-all tab-inactive flex items-center gap-2">
+                <i data-lucide="calendar-check" width="16"></i> Suivi
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1ÈRE CONSULT ==================== -->
+        <div id="tab-c1" class="tab-content active p-6 space-y-7">
+
+            <!-- 1. Motif -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">1</span> Motif de consultation
+                </h3>
+                <textarea id="c1-motif" rows="3" placeholder="Motif principal, plainte du patient..."
+                          class="field"></textarea>
+            </section>
+
+            <!-- 2. Histoire de la maladie -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">2</span> Histoire de la maladie / Anamnèse
+                </h3>
+                <textarea id="c1-anamnese" rows="5" placeholder="Chronologie, début des troubles, facteurs déclenchants, évolution..."
+                          class="field"></textarea>
+            </section>
+
+            <!-- 3. Antécédents -->
+            <section>
+                <h3 class="section-title mb-3">
+                    <span class="num bg-green-600">3</span> Antécédents
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="field-label">Personnels psychiatriques</label>
+                        <textarea id="c1-atcd-psy" rows="4" placeholder="Épisodes dépressifs, hospitalisations, TS, suivis antérieurs..."
+                                  class="field"></textarea>
+                    </div>
+                    <div>
+                        <label class="field-label">Personnels somatiques</label>
+                        <textarea id="c1-atcd-soma" rows="4" placeholder="Maladies chroniques, chirurgies, allergies..."
+                                  class="field"></textarea>
+                    </div>
+                    <div>
+                        <label class="field-label">Familiaux psychiatriques</label>
+                        <textarea id="c1-atcd-fam" rows="3" placeholder="Dépression, trouble bipolaire, schizophrénie, suicides..."
+                                  class="field"></textarea>
+                    </div>
+                    <div>
+                        <label class="field-label">Traitement actuel</label>
+                        <textarea id="c1-traitement" rows="3" placeholder="Médicaments, posologies, durée..."
+                                  class="field"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Notes en vrac -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">4</span> Notes en vrac
+                </h3>
+                <textarea id="c1-notes" rows="5" placeholder="Notes libres, observations cliniques, éléments non structurés..."
+                          class="field font-mono text-xs"></textarea>
+            </section>
+
+            <!-- 5. MADRS -->
+            <section>
+                <h3 class="section-title mb-4">
+                    <span class="num bg-indigo-600">5</span>
+                    MADRS — Échelle de dépression
+                    <span id="c1-madrs-badge" class="ml-auto bg-indigo-100 text-indigo-700 font-bold text-sm px-3 py-1 rounded-full">0 / 60</span>
+                </h3>
+                <div id="c1-madrs-container" class="space-y-3"></div>
+                <div id="c1-madrs-result" class="hidden mt-3 p-3 rounded-lg border text-sm font-medium"></div>
+            </section>
+
+            <!-- 6. RUD -->
+            <section>
+                <h3 class="section-title mb-4">
+                    <span class="num bg-red-600">6</span>
+                    RUD — Évaluation du risque suicidaire
+                </h3>
+                <div id="c1-rud-container"></div>
+            </section>
+
+            <!-- Synthèse -->
+            <section class="pt-5 border-t border-gray-200">
+                <button onclick="generateSynthese('c1')" id="c1-gen-btn"
+                        class="w-full flex items-center justify-center gap-3 py-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold rounded-xl transition-colors text-base shadow-sm">
+                    <i data-lucide="sparkles" width="20"></i>
+                    Générer la synthèse Doctolib avec Claude
+                </button>
+                <div id="c1-synthese-container" class="hidden mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-gray-700 text-sm flex items-center gap-1.5">
+                            <i data-lucide="file-text" width="14"></i> Synthèse — à coller dans Doctolib
+                        </h4>
+                        <button onclick="copySynthese('c1')" id="c1-copy-btn"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors">
+                            <i data-lucide="copy" width="12"></i> Copier
+                        </button>
+                    </div>
+                    <textarea id="c1-synthese" rows="12"
+                              class="w-full border border-green-300 rounded-xl p-4 text-sm bg-green-50 focus:ring-2 focus:ring-green-500 outline-none font-mono leading-relaxed"></textarea>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== TAB SUIVI ==================== -->
+        <div id="tab-sv" class="tab-content p-6 space-y-7">
+
+            <!-- 1. Info suivi -->
+            <section>
+                <h3 class="section-title mb-3">
+                    <span class="num bg-green-600">1</span> Informations du suivi
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="field-label">Délai depuis dernière consultation</label>
+                        <input type="text" id="sv-delai" placeholder="Ex: 3 semaines, 1 mois..."
+                               class="field">
+                    </div>
+                    <div>
+                        <label class="field-label">Traitement en cours</label>
+                        <input type="text" id="sv-ttt-actuel" placeholder="Médicaments actuels..."
+                               class="field">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Évolution -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">2</span> Évolution depuis la dernière consultation
+                </h3>
+                <textarea id="sv-evolution" rows="5" placeholder="Amélioration, stabilisation, dégradation. Symptômes persistants, nouveaux, résolus..."
+                          class="field"></textarea>
+            </section>
+
+            <!-- 3. Modifications traitement -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">3</span> Modifications du traitement
+                </h3>
+                <textarea id="sv-ttt-modif" rows="3" placeholder="Ajout, arrêt, augmentation de dose, substitution..."
+                          class="field"></textarea>
+            </section>
+
+            <!-- 4. Notes en vrac -->
+            <section>
+                <h3 class="section-title mb-2">
+                    <span class="num bg-green-600">4</span> Notes en vrac
+                </h3>
+                <textarea id="sv-notes" rows="5" placeholder="Notes libres, observations, éléments divers..."
+                          class="field font-mono text-xs"></textarea>
+            </section>
+
+            <!-- 5. MADRS -->
+            <section>
+                <h3 class="section-title mb-4">
+                    <span class="num bg-indigo-600">5</span>
+                    MADRS — Échelle de dépression
+                    <span id="sv-madrs-badge" class="ml-auto bg-indigo-100 text-indigo-700 font-bold text-sm px-3 py-1 rounded-full">0 / 60</span>
+                </h3>
+                <div id="sv-madrs-container" class="space-y-3"></div>
+                <div id="sv-madrs-result" class="hidden mt-3 p-3 rounded-lg border text-sm font-medium"></div>
+            </section>
+
+            <!-- 6. RUD -->
+            <section>
+                <h3 class="section-title mb-4">
+                    <span class="num bg-red-600">6</span>
+                    RUD — Évaluation du risque suicidaire
+                </h3>
+                <div id="sv-rud-container"></div>
+            </section>
+
+            <!-- Synthèse -->
+            <section class="pt-5 border-t border-gray-200">
+                <button onclick="generateSynthese('sv')" id="sv-gen-btn"
+                        class="w-full flex items-center justify-center gap-3 py-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold rounded-xl transition-colors text-base shadow-sm">
+                    <i data-lucide="sparkles" width="20"></i>
+                    Générer la synthèse Doctolib avec Claude
+                </button>
+                <div id="sv-synthese-container" class="hidden mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-gray-700 text-sm flex items-center gap-1.5">
+                            <i data-lucide="file-text" width="14"></i> Synthèse — à coller dans Doctolib
+                        </h4>
+                        <button onclick="copySynthese('sv')" id="sv-copy-btn"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors">
+                            <i data-lucide="copy" width="12"></i> Copier
+                        </button>
+                    </div>
+                    <textarea id="sv-synthese" rows="12"
+                              class="w-full border border-green-300 rounded-xl p-4 text-sm bg-green-50 focus:ring-2 focus:ring-green-500 outline-none font-mono leading-relaxed"></textarea>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- ===== INLINE STYLES (Tailwind @apply workaround) ===== -->
+<style>
+    .section-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #1f2937; }
+    .num { width: 24px; height: 24px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .field { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 13px; outline: none; resize: none; }
+    .field:focus { box-shadow: 0 0 0 2px #86efac; border-color: #22c55e; }
+    .field-label { display: block; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; }
+    input.field { resize: unset; }
+</style>
+
+<script>
+// =====================================================================
+//  MADRS DATA
+// =====================================================================
+const madrsItems = [
+    { id:1,  title:"Tristesse apparente",
+      desc:"Découragement, dépression et désespoir reflétés par la parole, la mimique et la posture.",
+      options:{0:"Pas de tristesse.",2:"A l'air découragé mais peut s'égayer sans difficulté.",4:"A l'air triste et malheureux la plupart du temps.",6:"A l'air malheureux tout le temps. Extrêmement découragé."} },
+    { id:2,  title:"Tristesse exprimée",
+      desc:"Expression verbale d'humeur dépressive, indépendamment du motif.",
+      options:{0:"Tristesse occasionnelle en rapport avec les circonstances.",2:"Triste ou humeur basse, mais s'égaie sans difficulté.",4:"Sentiments envahissants de tristesse ou de morosité.",6:"Tristesse, désespoir ou découragement continus ou invariables."} },
+    { id:3,  title:"Tension intérieure",
+      desc:"Sentiments de malaise, irritabilité, agitation interne, tension nerveuse.",
+      options:{0:"Placide. Rien qu'une tension passagère.",2:"Sentiments occasionnels de nervosité et d'inconfort.",4:"Tension interne continue ou panique intermittente difficile à maîtriser.",6:"Terreur ou angoisse tenace. Panique envahissante."} },
+    { id:4,  title:"Sommeil réduit",
+      desc:"Réduction de la durée ou profondeur du sommeil par rapport au sommeil habituel.",
+      options:{0:"Dort comme d'habitude.",2:"Légères difficultés d'endormissement ou sommeil légèrement réduit.",4:"Sommeil réduit ou fractionné d'au moins deux heures.",6:"Moins de deux ou trois heures de sommeil."} },
+    { id:5,  title:"Appétit réduit",
+      desc:"Perte d'appétit comparée à l'appétit habituel.",
+      options:{0:"Appétit normal ou augmenté.",2:"Appétit légèrement réduit.",4:"Pas d'appétit. La nourriture est fade.",6:"Ne mange que si on le force."} },
+    { id:6,  title:"Difficultés de concentration",
+      desc:"Difficultés à rassembler ses pensées.",
+      options:{0:"Pas de difficultés de concentration.",2:"Difficultés occasionnelles à rassembler sa pensée.",4:"Difficultés à se concentrer gênant la lecture ou la conversation.",6:"Incapacité à lire ou à converser sans effort important."} },
+    { id:7,  title:"Lassitude",
+      desc:"Difficulté à se mettre à la tâche ou lenteur dans l'exécution.",
+      options:{0:"Peu de difficultés à se mettre à l'ouvrage. Pas de lenteur.",2:"Difficultés à commencer des activités.",4:"Difficultés à commencer de simples activités de routine.",6:"Lassitude totale. Incapable de faire quoi que ce soit sans aide."} },
+    { id:8,  title:"Incapacité à ressentir",
+      desc:"Réduction subjective de l'intérêt pour le monde et du plaisir.",
+      options:{0:"Intérêt normal pour l'entourage et pour les autres.",2:"Capacité réduite à prendre du plaisir à ses intérêts habituels.",4:"Perte d'intérêt pour l'entourage. Perte de sentiments.",6:"Incapacité à ressentir de la colère, du chagrin ou du plaisir (apathie totale)."} },
+    { id:9,  title:"Pensées pessimistes",
+      desc:"Pensées de culpabilité, d'infériorité, d'auto-accusation.",
+      options:{0:"Pas de pensées pessimistes.",2:"Idées fluctuantes d'échec, d'auto-reproche ou d'auto-dépréciation.",4:"Auto-accusations persistantes ou idées de culpabilité définies mais rationnelles.",6:"Délire de ruine ou de péché. Auto-accusations absurdes et inébranlables."} },
+    { id:10, title:"⚠ Idées de suicide",
+      desc:"Sentiment que la vie ne vaut pas la peine, pensées suicidaires, préparatifs.",
+      options:{0:"Jouit de la vie ou la prend comme elle vient.",2:"Lasse de vivre. Idées de suicide passagères.",4:"Aurait mieux valu être mort. Idées de suicide courantes, envisagées comme solution.",6:"Plans explicites de suicide. Préparatifs actifs de suicide."} }
+];
+
+const madrsScores = { c1: {}, sv: {} };
+
+function renderMADRS(prefix) {
+    const container = document.getElementById(`${prefix}-madrs-container`);
+    container.innerHTML = madrsItems.map(q => `
+        <div class="border border-gray-200 rounded-lg bg-white p-4 shadow-sm">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm">${q.id}. ${q.title}</h4>
+                    <p class="text-xs text-gray-400 italic mt-0.5 leading-relaxed">${q.desc}</p>
+                </div>
+                <span id="${prefix}-mscore-${q.id}" class="ml-3 text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full whitespace-nowrap">— / 6</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs mb-2">
+                ${[0,2,4,6].map(v => `
+                    <div onclick="selectMADRS('${prefix}',${q.id},${v})"
+                         id="${prefix}-mcard-${q.id}-${v}"
+                         class="option-card p-2 rounded border border-gray-100 flex gap-2 items-start">
+                        <span class="font-bold text-gray-400 min-w-[14px]">${v}</span>
+                        <span class="text-gray-600 leading-relaxed">${q.options[v]}</span>
+                    </div>`).join('')}
+            </div>
+            <div class="flex gap-1 justify-end pt-1 border-t border-gray-100">
+                <span class="text-xs text-gray-400 mr-1 self-center">Précis :</span>
+                ${[0,1,2,3,4,5,6].map(v => `
+                    <button onclick="selectMADRS('${prefix}',${q.id},${v})"
+                            id="${prefix}-mbtn-${q.id}-${v}"
+                            class="score-btn text-gray-400 hover:bg-indigo-50 hover:text-indigo-600">${v}</button>`).join('')}
+            </div>
+        </div>`).join('');
+}
+
+function selectMADRS(prefix, qId, val) {
+    madrsScores[prefix][qId] = val;
+    document.getElementById(`${prefix}-mscore-${qId}`).textContent = `${val} / 6`;
+
+    [0,2,4,6].forEach(v => {
+        const c = document.getElementById(`${prefix}-mcard-${qId}-${v}`);
+        if(c) c.className = "option-card p-2 rounded border border-gray-100 flex gap-2 items-start";
+    });
+    for(let i=0;i<=6;i++) {
+        const b = document.getElementById(`${prefix}-mbtn-${qId}-${i}`);
+        if(b) b.className = "score-btn text-gray-400 hover:bg-indigo-50 hover:text-indigo-600";
+    }
+    if([0,2,4,6].includes(val)) {
+        const c = document.getElementById(`${prefix}-mcard-${qId}-${val}`);
+        if(c) { c.classList.add(val===0?'sel-0':val===2?'sel-2':val===4?'sel-4':'sel-6'); }
+    }
+    const b = document.getElementById(`${prefix}-mbtn-${qId}-${val}`);
+    if(b) b.className = "score-btn bg-indigo-600 text-white border-indigo-600";
+
+    updateMADRSTotal(prefix);
+}
+
+function updateMADRSTotal(prefix) {
+    const total = Object.values(madrsScores[prefix]).reduce((a,b)=>a+b,0);
+    document.getElementById(`${prefix}-madrs-badge`).textContent = `${total} / 60`;
+
+    let level, color;
+    if(total<=6)       { level="Normal (0-6)";           color="text-green-700 bg-green-50 border-green-300"; }
+    else if(total<=19) { level="Dépression légère (7-19)"; color="text-blue-700 bg-blue-50 border-blue-300"; }
+    else if(total<=34) { level="Dépression modérée (20-34)";color="text-orange-700 bg-orange-50 border-orange-300"; }
+    else               { level="Dépression sévère (>34)"; color="text-red-700 bg-red-50 border-red-300"; }
+
+    const r = document.getElementById(`${prefix}-madrs-result`);
+    r.className = `mt-3 p-3 rounded-lg border text-sm font-medium ${color}`;
+    r.textContent = `Score MADRS : ${total}/60 — ${level}`;
+    r.classList.remove('hidden');
+}
+
+// =====================================================================
+//  RUD — Risque, Urgence, Dangerosité
+// =====================================================================
+const rudFacteurs = [
+    { id:'ideation',    label:'Idéation suicidaire présente' },
+    { id:'plan',        label:'Plan suicidaire formulé' },
+    { id:'moyens',      label:'Accès aux moyens létaux' },
+    { id:'intention',   label:'Intention d\'agir' },
+    { id:'ts_ant',      label:'Tentatives antérieures' },
+    { id:'impulsivite', label:'Impulsivité marquée' },
+    { id:'intox',       label:'Intoxication (alcool / substances)' },
+    { id:'desespoir',   label:'Désespoir (hopelessness)' },
+    { id:'isolement',   label:'Isolement social' },
+    { id:'precipitant', label:'Événement précipitant récent' },
+];
+
+const rudState = {
+    c1: { urgence: null, dangero: null },
+    sv: { urgence: null, dangero: null }
+};
+
+function renderRUD(prefix) {
+    const container = document.getElementById(`${prefix}-rud-container`);
+    container.innerHTML = `
+        <div class="space-y-4">
+            <!-- R -->
+            <div class="bg-orange-50 border border-orange-200 rounded-xl p-5">
+                <h4 class="font-bold text-orange-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <i data-lucide="shield-alert" width="14"></i> R — Facteurs de risque
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    ${rudFacteurs.map(f=>`
+                        <label class="flex items-center gap-2 cursor-pointer group p-1 rounded hover:bg-orange-100 transition-colors">
+                            <input type="checkbox" id="${prefix}-rud-${f.id}" onchange="updateRUD('${prefix}')"
+                                   class="w-4 h-4 rounded accent-orange-500">
+                            <span class="text-sm text-gray-700">${f.label}</span>
+                        </label>`).join('')}
+                </div>
+                <div class="mt-3">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Précisions</label>
+                    <textarea id="${prefix}-rud-r-notes" rows="2" placeholder="Détails sur les facteurs cochés, circonstances..."
+                              class="w-full border border-orange-200 rounded-lg p-2 text-xs bg-white outline-none resize-none focus:ring-2 focus:ring-orange-400"></textarea>
+                </div>
+            </div>
+
+            <!-- U -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+                <h4 class="font-bold text-yellow-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <i data-lucide="clock" width="14"></i> U — Urgence (imminence du passage à l'acte)
+                </h4>
+                <div class="grid grid-cols-3 gap-3">
+                    ${[
+                        {lvl:'Faible',   sub:'Idéation sans plan, ambivalent', color:'green'},
+                        {lvl:'Modérée',  sub:'Plan flou, facteurs protecteurs', color:'orange'},
+                        {lvl:'Élevée',   sub:'Plan précis, peu ambivalent', color:'red'}
+                    ].map((o,i)=>`
+                        <div onclick="selectRUD('${prefix}','urgence','${o.lvl}',${i})"
+                             id="${prefix}-u-card-${i}"
+                             class="rud-card p-3 rounded-xl border-2 border-yellow-200 bg-white text-center cursor-pointer transition-all hover:border-yellow-400">
+                            <div class="font-bold text-sm text-${o.color}-600">${o.lvl}</div>
+                            <div class="text-xs text-gray-500 mt-1 leading-snug">${o.sub}</div>
+                        </div>`).join('')}
+                </div>
+            </div>
+
+            <!-- D -->
+            <div class="bg-red-50 border border-red-200 rounded-xl p-5">
+                <h4 class="font-bold text-red-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <i data-lucide="zap" width="14"></i> D — Dangerosité (létalité du moyen envisagé)
+                </h4>
+                <div class="grid grid-cols-3 gap-3">
+                    ${[
+                        {lvl:'Faible',   sub:'Moyen peu létal (médicaments légers)', color:'green'},
+                        {lvl:'Modérée',  sub:'Moyen modérément létal (médicaments en quantité)', color:'orange'},
+                        {lvl:'Élevée',   sub:'Moyen hautement létal (arme, pendaison, défenestration)', color:'red'}
+                    ].map((o,i)=>`
+                        <div onclick="selectRUD('${prefix}','dangero','${o.lvl}',${i})"
+                             id="${prefix}-d-card-${i}"
+                             class="rud-card p-3 rounded-xl border-2 border-red-200 bg-white text-center cursor-pointer transition-all hover:border-red-400">
+                            <div class="font-bold text-sm text-${o.color}-600">${o.lvl}</div>
+                            <div class="text-xs text-gray-500 mt-1 leading-snug">${o.sub}</div>
+                        </div>`).join('')}
+                </div>
+            </div>
+
+            <!-- Conclusion -->
+            <div id="${prefix}-rud-conclusion" class="hidden p-5 rounded-xl border-2 text-center">
+                <div class="text-xs font-bold uppercase tracking-wider mb-1 opacity-70">Risque suicidaire global</div>
+                <div id="${prefix}-rud-level" class="text-2xl font-bold"></div>
+            </div>
+        </div>`;
+    lucide.createIcons();
+}
+
+function selectRUD(prefix, type, level, idx) {
+    rudState[prefix][type] = level;
+    const isU = type === 'urgence';
+    const cardPrefix = isU ? `${prefix}-u-card-` : `${prefix}-d-card-`;
+    const borderBase  = isU ? 'border-yellow-200' : 'border-red-200';
+    const hoverClass  = isU ? 'hover:border-yellow-400' : 'hover:border-red-400';
+
+    for(let i=0;i<3;i++) {
+        const c = document.getElementById(`${cardPrefix}${i}`);
+        if(c) c.className = `rud-card p-3 rounded-xl border-2 ${borderBase} bg-white text-center cursor-pointer transition-all ${hoverClass}`;
+    }
+    const sel = document.getElementById(`${cardPrefix}${idx}`);
+    if(sel) {
+        const bg  = idx===0 ? 'bg-green-50 border-green-400'  : idx===1 ? 'bg-orange-50 border-orange-400' : 'bg-red-50 border-red-500';
+        sel.className = `rud-card p-3 rounded-xl border-2 ${bg} text-center cursor-pointer transition-all`;
+    }
+    updateRUD(prefix);
+}
+
+function updateRUD(prefix) {
+    const checkedCount = rudFacteurs.filter(f=>document.getElementById(`${prefix}-rud-${f.id}`)?.checked).length;
+    const urgence = rudState[prefix].urgence;
+    const dangero = rudState[prefix].dangero;
+    if(!urgence && !dangero) return;
+
+    const lvl = {'Faible':0,'Modérée':1,'Élevée':2};
+    const u = lvl[urgence]??0;
+    const d = lvl[dangero]??0;
+    const r = checkedCount>=6?2 : checkedCount>=3?1 : 0;
+    const max = Math.max(u,d,r);
+
+    let risk, style;
+    if(max===0)                  { risk='Faible';      style='border-green-400 bg-green-50 text-green-800'; }
+    else if(max===1)             { risk='Modéré';      style='border-orange-400 bg-orange-50 text-orange-800'; }
+    else if(u===2 && d===2)      { risk='Très élevé';  style='border-red-600 bg-red-100 text-red-900'; }
+    else                         { risk='Élevé';       style='border-red-500 bg-red-50 text-red-800'; }
+
+    const el = document.getElementById(`${prefix}-rud-conclusion`);
+    el.className = `p-5 rounded-xl border-2 text-center ${style}`;
+    el.classList.remove('hidden');
+    document.getElementById(`${prefix}-rud-level`).textContent = risk;
+}
+
+// =====================================================================
+//  TABS
+// =====================================================================
+function switchTab(tab) {
+    ['c1','sv'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.remove('active');
+        document.getElementById(`tab-btn-${t}`).className = 'px-6 py-4 text-sm transition-all tab-inactive flex items-center gap-2';
+    });
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById(`tab-btn-${tab}`).className = 'px-6 py-4 text-sm transition-all tab-active flex items-center gap-2';
+}
+
+// =====================================================================
+//  API KEY
+// =====================================================================
+function saveApiKey() {
+    const key = document.getElementById('api-key-input').value.trim();
+    if(!key.startsWith('sk-ant-')) {
+        document.getElementById('api-key-status').textContent = '⚠ Format incorrect (doit commencer par sk-ant-)';
+        return;
+    }
+    localStorage.setItem('claude_api_key', key);
+    document.getElementById('api-key-status').textContent = '✓ Clé enregistrée dans votre navigateur';
+    document.getElementById('api-key-input').value = '';
+}
+
+function getApiKey() { return localStorage.getItem('claude_api_key') || ''; }
+
+// =====================================================================
+//  BUILD PROMPT
+// =====================================================================
+function buildPrompt(prefix) {
+    const isC1 = prefix === 'c1';
+    const nom  = document.getElementById('patient-nom').value  || 'Non renseigné';
+    const ddn  = document.getElementById('patient-ddn').value  || '';
+    const date = document.getElementById('patient-date').value || new Date().toLocaleDateString('fr-FR');
+
+    let ctx = `Patient : ${nom}${ddn ? ', né(e) le '+ddn : ''}\nDate : ${date}\n\n`;
+
+    if(isC1) {
+        ctx += `TYPE : Première consultation\n\n`;
+        ctx += `MOTIF : ${document.getElementById('c1-motif').value||'—'}\n\n`;
+        ctx += `HISTOIRE DE LA MALADIE : ${document.getElementById('c1-anamnese').value||'—'}\n\n`;
+        ctx += `ATCD PSYCHIATRIQUES : ${document.getElementById('c1-atcd-psy').value||'—'}\n`;
+        ctx += `ATCD SOMATIQUES : ${document.getElementById('c1-atcd-soma').value||'—'}\n`;
+        ctx += `ATCD FAMILIAUX PSY : ${document.getElementById('c1-atcd-fam').value||'—'}\n\n`;
+        ctx += `TRAITEMENT ACTUEL : ${document.getElementById('c1-traitement').value||'—'}\n\n`;
+        ctx += `NOTES CLINIQUES : ${document.getElementById('c1-notes').value||'—'}\n\n`;
+    } else {
+        ctx += `TYPE : Consultation de suivi\n\n`;
+        ctx += `DÉLAI DEPUIS DERNIÈRE CONSULT : ${document.getElementById('sv-delai').value||'—'}\n`;
+        ctx += `TRAITEMENT EN COURS : ${document.getElementById('sv-ttt-actuel').value||'—'}\n\n`;
+        ctx += `ÉVOLUTION : ${document.getElementById('sv-evolution').value||'—'}\n\n`;
+        ctx += `MODIFICATIONS TRAITEMENT : ${document.getElementById('sv-ttt-modif').value||'—'}\n\n`;
+        ctx += `NOTES : ${document.getElementById('sv-notes').value||'—'}\n\n`;
+    }
+
+    // MADRS
+    const madrsAnswered = Object.keys(madrsScores[prefix]).length;
+    if(madrsAnswered > 0) {
+        const total = Object.values(madrsScores[prefix]).reduce((a,b)=>a+b,0);
+        const level = total<=6?'Normal':total<=19?'Légère':total<=34?'Modérée':'Sévère';
+        ctx += `MADRS : ${total}/60 — Dépression ${level}\n`;
+        madrsItems.forEach(q => {
+            const s = madrsScores[prefix][q.id];
+            if(s !== undefined) ctx += `  ${q.id}. ${q.title} : ${s}/6\n`;
+        });
+        ctx += '\n';
+    }
+
+    // RUD
+    const rudChecked = rudFacteurs.filter(f=>document.getElementById(`${prefix}-rud-${f.id}`)?.checked).map(f=>f.label);
+    const rudNotes   = document.getElementById(`${prefix}-rud-r-notes`)?.value;
+    const urgence    = rudState[prefix].urgence;
+    const dangero    = rudState[prefix].dangero;
+    const rudLevel   = document.getElementById(`${prefix}-rud-level`)?.textContent;
+
+    if(rudChecked.length>0 || urgence || dangero) {
+        ctx += `ÉVALUATION SUICIDAIRE (RUD) :\n`;
+        if(rudChecked.length>0) ctx += `  Facteurs de risque : ${rudChecked.join(', ')}\n`;
+        if(rudNotes)            ctx += `  Précisions : ${rudNotes}\n`;
+        if(urgence)             ctx += `  Urgence : ${urgence}\n`;
+        if(dangero)             ctx += `  Dangerosité : ${dangero}\n`;
+        if(rudLevel)            ctx += `  → RISQUE GLOBAL : ${rudLevel}\n`;
+        ctx += '\n';
+    }
+
+    return `Tu es un assistant médical pour un psychiatre francophone. Sur base des données ci-dessous, génère une synthèse de consultation professionnelle et concise, destinée à être copiée dans Doctolib comme compte-rendu de consultation.
+
+Consignes :
+- Style médical francophone courant, phrases courtes et précises
+- Structure logique : motif → anamnèse/évolution → éléments cliniques → scores → conclusion → plan de soins
+- 150 à 250 mots maximum
+- Si risque suicidaire présent ou MADRS élevé, le mentionner explicitement
+- Génère uniquement la synthèse, sans commentaire ni introduction
+
+Données :
+${ctx}`;
+}
+
+// =====================================================================
+//  GENERATE SYNTHESE
+// =====================================================================
+async function generateSynthese(prefix) {
+    const apiKey = getApiKey();
+    if(!apiKey) {
+        alert('Veuillez d\'abord renseigner votre clé API Claude dans le champ en haut de page.');
+        return;
+    }
+
+    const btn = document.getElementById(`${prefix}-gen-btn`);
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="animate-spin" style="width:20px;height:20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>&nbsp;Génération en cours…`;
+
+    try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 1024,
+                messages: [{ role: 'user', content: buildPrompt(prefix) }]
+            })
+        });
+
+        if(!resp.ok) {
+            const err = await resp.json().catch(()=>({}));
+            throw new Error(err.error?.message || `Erreur HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const text = data.content[0].text;
+
+        document.getElementById(`${prefix}-synthese`).value = text;
+        const container = document.getElementById(`${prefix}-synthese-container`);
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+    } catch(e) {
+        alert(`Erreur lors de la génération :\n${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>&nbsp;Générer la synthèse Doctolib avec Claude`;
+    }
+}
+
+function copySynthese(prefix) {
+    const text = document.getElementById(`${prefix}-synthese`).value;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(`${prefix}-copy-btn`);
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Copié !';
+        btn.className = btn.className.replace('bg-gray-100','bg-green-100').replace('text-gray-700','text-green-700');
+        setTimeout(() => { btn.innerHTML = orig; btn.className = btn.className.replace('bg-green-100','bg-gray-100').replace('text-green-700','text-gray-700'); }, 2000);
+    });
+}
+
+// =====================================================================
+//  RESET
+// =====================================================================
+function resetAll() {
+    if(!confirm('Réinitialiser tout le formulaire ?')) return;
+    document.querySelectorAll('input[type="text"],input[type="date"],textarea').forEach(el=>el.value='');
+    document.querySelectorAll('input[type="checkbox"]').forEach(el=>el.checked=false);
+    madrsScores.c1 = {}; madrsScores.sv = {};
+    rudState.c1 = {urgence:null,dangero:null};
+    rudState.sv = {urgence:null,dangero:null};
+    renderMADRS('c1'); renderMADRS('sv');
+    renderRUD('c1');   renderRUD('sv');
+    ['c1','sv'].forEach(p => {
+        document.getElementById(`${p}-madrs-badge`).textContent = '0 / 60';
+        document.getElementById(`${p}-madrs-result`).classList.add('hidden');
+        document.getElementById(`${p}-synthese-container`).classList.add('hidden');
+    });
+    document.getElementById('patient-date').valueAsDate = new Date();
+}
+
+// =====================================================================
+//  INIT
+// =====================================================================
+window.onload = function() {
+    document.getElementById('patient-date').valueAsDate = new Date();
+    renderMADRS('c1'); renderMADRS('sv');
+    renderRUD('c1');   renderRUD('sv');
+    lucide.createIcons();
+
+    const saved = getApiKey();
+    if(saved) document.getElementById('api-key-status').textContent = '✓ Clé API enregistrée';
+};
+</script>
+</body>
+</html>
