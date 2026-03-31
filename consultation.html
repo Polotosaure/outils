@@ -935,8 +935,8 @@ async function analyzeTranscript() {
 
     const isC1 = recTargetTab === 'c1';
     const fieldsDesc = isC1
-        ? `{"motif":"motif principal de consultation (1-2 phrases)","anamnese":"histoire de la maladie, chronologie des troubles, facteurs déclenchants","atcd_psy":"antécédents psychiatriques personnels mentionnés","atcd_soma":"antécédents somatiques mentionnés","atcd_fam":"antécédents psychiatriques familiaux mentionnés","traitement":"traitements actuels mentionnés avec posologies si précisées","notes":"autres éléments cliniques pertinents (comportement, éléments d'examen, remarques)"}`
-        : `{"evolution":"évolution depuis la dernière consultation, symptômes persistants ou améliorés","ttt_modif":"modifications de traitement évoquées ou décidées","notes":"autres éléments cliniques, observations, événements intercurrents"}`;
+        ? `{"motif":"motif(s) principal/aux, style télégraphique","anamnese":"chronologie et faits clés, un fait par tiret (- ...)","atcd_psy":"liste des atcd psy, un par tiret","atcd_soma":"liste des atcd soma, un par tiret","atcd_fam":"liste des atcd fam, un par tiret","traitement":"liste molécule + dose, un par tiret","notes":"éléments cliniques isolés, un par tiret"}`
+        : `{"evolution":"symptômes/changements clés, un par tiret (- ...)","ttt_modif":"modifications de traitement, un par tiret","notes":"autres éléments, un par tiret"}`;
 
     const prompt = `Tu es un assistant médical. Voici la transcription d'une ${isC1 ? 'première consultation' : 'consultation de suivi'} psychiatrique.
 
@@ -944,8 +944,9 @@ Extrais les éléments cliniques pertinents et réponds UNIQUEMENT avec un objet
 Les champs à remplir : ${fieldsDesc}
 
 Règles :
+- Style télégraphique : mots-clés uniquement, pas de phrases
+- Format tirets : chaque élément commence par "- ", plusieurs éléments séparés par \\n
 - Si un élément n'est pas mentionné dans la transcription, laisser le champ vide ""
-- Reformuler en style médical concis (pas de verbatim)
 - Ne pas inventer d'informations absentes de la transcription
 
 Transcription :
