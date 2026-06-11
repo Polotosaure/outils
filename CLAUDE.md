@@ -17,14 +17,22 @@ This repository contains a collection of **French-language clinical psychometric
 
 ```
 /outils/
-├── index.html              # Landing page with tool catalog
-├── diva2.html             # DIVA 2.0 - ADHD structured interview
-├── asrs.html              # ASRS v1.1 - Adult ADHD Self-Report Scale
-├── raads.html             # RAADS-14 - Autism/Asperger screening
-├── madrs.html             # MADRS - Depression rating scale
-├── antidepresseurs.html   # Antidepressants reference guide
-├── benzo.html             # Benzodiazepines pharmacology reference
-└── CLAUDE.md              # This file
+├── index.html                  # Landing page with tool catalog
+├── diva2.html                  # DIVA 2.0 - ADHD structured interview
+├── asrs.html                   # ASRS v1.1 - Adult ADHD Self-Report Scale
+├── raads.html                  # RAADS-14 - Autism/Asperger screening
+├── madrs.html                  # MADRS - Depression rating scale
+├── epworth.html                # Epworth Sleepiness Scale
+├── humeur.html                 # Mood & sleep monthly calendar (patient diary)
+├── scid2.html                  # SCID-II personality screening questionnaire
+├── troubles-personnalite.html  # DSM-5 personality disorders criteria reference
+├── antidepresseurs.html        # Antidepressants reference guide
+├── benzo.html                  # Benzodiazepines pharmacology reference
+├── surveillance.html           # Psychiatric treatment monitoring reference
+├── fiches-patients.html        # Printable patient medication info sheets
+├── consultation.html           # Consultation assistant (uses Claude API)
+├── courrier-sortie.html        # Discharge letter generator (uses Claude API)
+└── CLAUDE.md                   # This file
 ```
 
 ---
@@ -94,6 +102,51 @@ This repository contains a collection of **French-language clinical psychometric
   - Legal prescription limits (anxiolytics: 12 weeks, hypnotics: 4 weeks)
 - **Icon**: `hourglass`
 - **Special**: Includes active metabolite warnings and accumulation risks
+
+### 3. **Sleep & Patient Follow-up** (Sommeil & Suivi)
+
+#### Epworth (`epworth.html`)
+- **Full Name**: Epworth Sleepiness Scale (ESS)
+- **Type**: Self-report sleepiness questionnaire (8 items, 0-3 each, total /24)
+- **Color Theme**: Purple (`purple-500/600`)
+
+#### Calendrier Humeur & Sommeil (`humeur.html`)
+- **Type**: Monthly patient diary (mood /10, sleep hours/quality, PRN meds, notes)
+- **Color Theme**: Amber (`amber-500/600`)
+- **Features**: Calendar grid, monthly averages, mood bar chart
+
+### 4. **Personality** (Personnalité)
+
+#### SCID-II (`scid2.html`)
+- **Full Name**: Structured Clinical Interview for DSM Personality Disorders - screening questionnaire
+- **Type**: Self-report screening with per-disorder thresholds
+- **Color Theme**: Fuchsia (`fuchsia-500/600`)
+
+#### Troubles de la Personnalité (`troubles-personnalite.html`)
+- **Type**: Reference tool — DSM-5-TR diagnostic criteria by cluster (A/B/C)
+- **Color Theme**: Orange (`orange-500/600`)
+
+### 5. **Clinical Practice Aids** (Aides à la pratique)
+
+#### Surveillance (`surveillance.html`)
+- **Type**: Reference table — biological/clinical monitoring of psychiatric treatments
+- **Color Theme**: Cyan (`cyan-500/600`)
+
+#### Fiches Patients (`fiches-patients.html`)
+- **Type**: Printable medication information sheets to hand to patients
+- **Color Theme**: Emerald (`emerald-500/600`)
+
+#### Assistant de Consultation (`consultation.html`)
+- **Type**: Consultation note-taking assistant with speech-to-text and Claude API analysis
+- **Color Theme**: Green (`green-600`)
+- **Special**: Calls the Anthropic API directly from the browser with a user-supplied API key (`anthropic-dangerous-direct-browser-access` header). The key is stored locally; no intermediate server.
+
+#### Courrier de Sortie (`courrier-sortie.html`)
+- **Type**: Hospital discharge letter generator via Claude API
+- **Color Theme**: Orange (`orange-600`)
+- **Special**: Same direct-browser Claude API pattern as `consultation.html`. Generated text is parsed into `[MOTIF]/[SYNTHESE]/[VIE]/[SUITE]` sections.
+
+> **Note on the "client-side only" principle**: `consultation.html` and `courrier-sortie.html` are the only tools that send data off-device — they call the Anthropic API directly with the practitioner's own API key. All other tools never transmit anything.
 
 ---
 
@@ -495,9 +548,10 @@ When contributing code:
 | Date | Version | Changes |
 |------|---------|---------|
 | 2024-11 | 1.0 | Initial repository with 7 tools |
+| 2026-06 | 1.1 | Catalog expanded to 15 tools; documented Claude API tools; favicon, navigation and print-style fixes |
 
 ---
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2026-06-11
 **Maintained By**: AI-assisted development via Claude Code
 **License**: Not specified (professional medical use)
