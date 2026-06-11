@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Courrier de Sortie</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -361,6 +362,14 @@ async function generateCourrier() {
         const data = await resp.json();
         const text = data.content?.[0]?.text || '';
         const sections = parseResponse(text);
+
+        // Si la réponse ne contient aucune balise attendue, ne pas perdre le texte :
+        // tout placer dans la synthèse et prévenir l'utilisateur.
+        if (text.trim() && !sections.motif && !sections.synthese && !sections.vie && !sections.suite) {
+            sections.synthese = text.trim();
+            document.getElementById('error-box').style.display = 'block';
+            document.getElementById('error-msg').textContent = '⚠ La réponse n\'a pas pu être découpée en sections : le texte complet a été placé dans « Synthèse clinique ». Répartissez-le manuellement si besoin.';
+        }
 
         document.getElementById('s-motif').value   = sections.motif;
         document.getElementById('s-synthese').value = sections.synthese;

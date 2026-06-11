@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MADRS - Échelle de Dépression</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
@@ -15,7 +16,7 @@
             .break-inside-avoid { break-inside: avoid; }
             input, textarea { border: none !important; background: transparent !important; resize: none; }
             input::placeholder, textarea::placeholder { color: transparent; }
-            .shadow-xl { shadow: none !important; }
+            .shadow-xl { box-shadow: none !important; }
         }
         
         .option-card {
@@ -50,6 +51,9 @@
     <div class="no-print sticky top-0 z-50 bg-white border-b shadow-md p-4 mb-6">
         <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Retour à l'accueil">
+                    <i data-lucide="arrow-left" class="text-gray-600"></i>
+                </a>
                 <div class="bg-indigo-600 p-2 rounded-lg text-white">
                     <i data-lucide="activity"></i>
                 </div>
