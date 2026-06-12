@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QCM Psychopharmacologie</title>
+    <meta name="description" content="QCM interactif de psychopharmacologie clinique : lithium, QT, clozapine, thymorégulateurs, syndromes, antidépresseurs, benzodiazépines, stimulants, CYP450, antipsychotiques. Correction immédiate et explications sourcées. Traitement 100 % local.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            .shadow-xl { box-shadow: none !important; }
+        }
+        .choice-btn { transition: all 0.15s ease; }
+        .fade-in { animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- En-tête -->
+    <div class="no-print sticky top-0 z-50 bg-white border-b shadow-sm p-4 mb-6">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="text-slate-600"></i>
+                </a>
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <i data-lucide="graduation-cap" width="20" height="20"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">QCM Psychopharmacologie</h1>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="goHome()" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">
+                    <i data-lucide="layout-grid" width="16"></i> <span class="hidden sm:inline">Thèmes</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto p-4 sm:p-6 mb-16">
+
+        <!-- ÉCRAN ACCUEIL : choix du thème -->
+        <div id="screen-home">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 mb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">Entraînement par QCM</h2>
+                <p class="text-slate-500 text-sm mb-4">Choisissez un thème (ou révisez tout). Correction immédiate avec explication sourcée à chaque question.</p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="opt-shuffle-q" class="w-4 h-4 accent-indigo-600" checked>
+                        <span>Mélanger les questions</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="opt-shuffle-a" class="w-4 h-4 accent-indigo-600" checked>
+                        <span>Mélanger les réponses</span>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="startQuiz('ALL')" class="group w-full text-left bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl shadow-lg p-6 mb-6 hover:shadow-xl transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-indigo-200 mb-1">Mode révision complète</div>
+                        <div class="text-xl font-bold">Tous les thèmes mélangés</div>
+                        <div class="text-sm text-indigo-100 mt-1" id="all-count"></div>
+                    </div>
+                    <i data-lucide="shuffle" width="28" class="opacity-90 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </button>
+
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Thèmes</h3>
+            <div id="theme-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+            <p class="text-xs text-slate-400 mt-8 leading-relaxed" id="disclaimer-home"></p>
+        </div>
+
+        <!-- ÉCRAN QUIZ -->
+        <div id="screen-quiz" class="hidden">
+            <!-- Barre de progression -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center text-sm mb-2">
+                    <span id="quiz-theme-label" class="font-bold text-indigo-600"></span>
+                    <span id="quiz-progress-label" class="text-slate-500 font-medium"></span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div id="quiz-progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8">
+                <div id="quiz-question" class="text-lg font-bold text-slate-900 mb-6 leading-snug"></div>
+                <div id="quiz-choices" class="space-y-3"></div>
+
+                <!-- Feedback / explication -->
+                <div id="quiz-feedback" class="hidden mt-6 rounded-xl border p-4 fade-in">
+                    <div id="feedback-verdict" class="flex items-center gap-2 font-bold mb-2"></div>
+                    <p id="feedback-explication" class="text-sm text-slate-700 leading-relaxed"></p>
+                    <p id="feedback-source" class="text-xs text-slate-400 mt-3 flex items-center gap-1"></p>
+                </div>
+
+                <div class="mt-6 flex justify-between items-center">
+                    <span id="quiz-score-live" class="text-sm font-medium text-slate-500"></span>
+                    <button id="quiz-next-btn" onclick="nextQuestion()" class="hidden items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                        <span id="quiz-next-label">Suivante</span> <i data-lucide="arrow-right" width="16"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉCRAN RÉSULTATS -->
+        <div id="screen-results" class="hidden">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 text-center mb-6">
+                <div id="result-emoji" class="text-5xl mb-3"></div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">Résultat</h2>
+                <p id="result-theme-label" class="text-slate-500 text-sm mb-6"></p>
+
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span id="result-score" class="text-6xl font-bold text-indigo-600">0</span>
+                    <span id="result-total" class="text-2xl text-slate-400 font-bold self-end mb-2">/0</span>
+                </div>
+                <div id="result-percent" class="text-lg font-bold mb-6"></div>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onclick="restartSame()" class="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                        <i data-lucide="rotate-ccw" width="16"></i> Recommencer ce thème
+                    </button>
+                    <button onclick="goHome()" class="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg">
+                        <i data-lucide="layout-grid" width="16"></i> Autres thèmes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Revue des erreurs -->
+            <div id="result-review" class="hidden">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">À revoir</h3>
+                <div id="result-review-list" class="space-y-4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    const QCM_DATA = {
+      "version": 2,
+      "updated": "2026-06-12",
+      "disclaimer": "Contenu pédagogique. Vérifier toute posologie et toute contrainte réglementaire sur Vidal, Thériaque ou le Thésaurus ANSM avant application clinique. Les sources sont anglo-saxonnes (Maudsley, Carlat, Stahl) : les règles françaises (AMM, durées de prescription, ordonnance sécurisée, dispensation) peuvent différer et priment.",
+      "themes": [
+        { "id": "lithium", "titre": "Lithium : surveillance et toxicité", "questions": [
+          { "q": "Quelle est la fourchette thérapeutique habituelle de la lithémie en traitement d'entretien du trouble bipolaire ?", "choix": ["0,2–0,4 mmol/L","0,6–0,8 mmol/L","1,2–1,5 mmol/L","1,8–2,0 mmol/L"], "bonne": 1, "explication": "En entretien on vise classiquement 0,6–0,8 mmol/L (jusqu'à 1,0 selon réponse). Au-delà de 1,2 le risque toxique augmente nettement.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "À quel moment doit-on prélever la lithémie par rapport à la dernière prise ?", "choix": ["2 h après","6 h après","12 h après","24 h après"], "bonne": 2, "explication": "La lithémie résiduelle se dose 12 h après la dernière prise, pour permettre une comparaison standardisée d'un dosage à l'autre.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Lequel de ces signes évoque une intoxication au lithium plutôt qu'un effet banal ?", "choix": ["Tremblement fin des extrémités","Tremblement grossier avec ataxie et confusion","Polyurie modérée","Prise de poids"], "bonne": 1, "explication": "Le tremblement fin et la polyurie sont des effets dose-dépendants courants. Tremblement grossier, ataxie, dysarthrie et confusion signent une toxicité.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quel facteur augmente le risque de toxicité au lithium ?", "choix": ["Régime riche en sodium","Déshydratation et AINS","Activité physique modérée","Supplémentation potassique"], "bonne": 1, "explication": "Toute déplétion sodée (déshydratation, régime hyposodé, thiazidiques) accroît la réabsorption tubulaire du lithium ; les AINS réduisent sa clairance rénale.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel effet le lithium a-t-il sur la numération leucocytaire ?", "choix": ["Il l'abaisse","Il l'augmente (neutrophiles et leucocytes totaux)","Il est sans effet","Il provoque une éosinophilie isolée"], "bonne": 1, "explication": "Le lithium élève le compte de neutrophiles et la leucocytose totale, de façon aiguë et chronique. Il a même été utilisé pour remonter la NFS sous chimiothérapie.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel bilan est recommandé avant l'instauration d'un lithium ?", "choix": ["NFS seule","Fonction rénale, fonction thyroïdienne, ionogramme (± calcémie)","EEG","Dosage des catécholamines urinaires"], "bonne": 1, "explication": "Le bilan pré-thérapeutique comporte fonction rénale, TSH/bilan thyroïdien, ionogramme ; on surveille aussi la fonction rénale et thyroïdienne au long cours.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel risque accompagne l'arrêt brutal d'un lithium d'entretien ?", "choix": ["Aucun risque particulier","Risque élevé de rechute thymique (60–90 % à 1 an)","Hypertension de rebond","Syndrome sérotoninergique"], "bonne": 1, "explication": "L'arrêt du lithium d'entretien expose à 60–90 % de récidive thymique à un an ; ce risque est d'autant plus grand que l'arrêt est rapide. Arrêt progressif recommandé.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Pour quelle forme de trouble bipolaire le lithium est-il considéré comme le plus efficace ?", "choix": ["Cycles rapides","États mixtes","Manie euphorique","Manie dysphorique"], "bonne": 2, "explication": "Le lithium est plus efficace dans la manie euphorique que dans les formes mixtes ou à cycles rapides. Il garde un effet anti-suicide reconnu.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel effet anti-suicide est spécifiquement attribué au lithium ?", "choix": ["Aucun démontré","Réduction du risque suicidaire dans les troubles thymiques uni et bipolaires","Uniquement dans la schizophrénie","Uniquement chez l'adolescent"], "bonne": 1, "explication": "Le lithium possède un effet anti-suicide reconnu dans les troubles de l'humeur unipolaires et bipolaires, distinct de son effet thymorégulateur.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Une lithémie minimale d'environ quelle valeur semble nécessaire pour obtenir l'effet de remontée leucocytaire ?", "choix": ["0,1 mmol/L","0,4 mmol/L","1,0 mmol/L","1,5 mmol/L"], "bonne": 1, "explication": "Une lithémie ≥ 0,4 mmol/L paraît requise pour l'effet hématologique ; dans les associations avec clozapine on vise souvent > 0,6 mmol/L.", "source": "Maudsley Prescribing Guidelines" }
+        ]},
+        { "id": "qt", "titre": "Allongement du QT", "questions": [
+          { "q": "Au-delà de quelle valeur de QTc parle-t-on classiquement d'allongement préoccupant ?", "choix": ["> 400 ms","> 440 ms","> 500 ms","> 550 ms"], "bonne": 2, "explication": "Un QTc > 500 ms (ou une augmentation > 60 ms par rapport à la base) est associé à un risque accru de torsades de pointes et impose une réévaluation.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle voie d'administration de l'halopéridol est la plus à risque d'allongement du QT et de torsades ?", "choix": ["Voie orale","Voie intramusculaire dépôt","Voie intraveineuse","Voie sublinguale"], "bonne": 2, "explication": "L'halopéridol IV présente un risque notable d'allongement du QT et de torsades, justifiant une surveillance ECG/scope.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Parmi ces facteurs, lequel majore le risque d'allongement du QT médicamenteux ?", "choix": ["Hyperkaliémie","Hypokaliémie et hypomagnésémie","Tachycardie sinusale","Sexe masculin"], "bonne": 1, "explication": "Hypokaliémie, hypomagnésémie, hypocalcémie, bradycardie, sexe féminin et cardiopathie préexistante majorent le risque. Corriger les troubles ioniques.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel antipsychotique a plutôt un profil favorable sur le QT ?", "choix": ["Halopéridol IV","Aripiprazole","Pimozide","Sertindole"], "bonne": 1, "explication": "L'aripiprazole et la lurasidone ont un profil QT relativement favorable, contrairement au pimozide, au sertindole ou à l'halopéridol IV.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle augmentation du QTc par rapport à la valeur de base est considérée comme significative ?", "choix": ["> 10 ms","> 30 ms","> 60 ms","> 100 ms"], "bonne": 2, "explication": "Une augmentation > 60 ms par rapport au QTc de base est cliniquement significative, même si la valeur absolue reste sous 500 ms.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "La torsade de pointes est :", "choix": ["Une bradycardie jonctionnelle","Une tachycardie ventriculaire polymorphe pouvant dégénérer en FV","Un bloc auriculo-ventriculaire","Une fibrillation auriculaire"], "bonne": 1, "explication": "La torsade de pointes est une tachycardie ventriculaire polymorphe sur QT long, pouvant évoluer vers une fibrillation ventriculaire et une mort subite.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle conduite est appropriée devant un QTc à 480 ms sous antipsychotique ?", "choix": ["Arrêt immédiat et hospitalisation systématique","Surveillance, correction des facteurs favorisants, réévaluation","Doubler la dose pour saturer l'effet","Aucune action, valeur normale"], "bonne": 1, "explication": "Entre 440 et 500 ms, on surveille, corrige les facteurs favorisants (ionogramme, interactions) et réévalue ; l'arrêt s'impose surtout au-delà de 500 ms ou en cas de symptômes.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle classe d'antidépresseur est associée au plus fort allongement du QT, motivant une limite de dose ?", "choix": ["Sertraline","Citalopram à dose élevée","Mirtazapine","Bupropion"], "bonne": 1, "explication": "Le citalopram (et l'escitalopram) allonge le QT de façon dose-dépendante ; un ECG est recommandé au-delà des doses seuils ou en cas de cardiopathie.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "clozapine", "titre": "Clozapine : hématotoxicité et surveillance", "questions": [
+          { "q": "Quelle proportion approximative de patients sous clozapine développe une agranulocytose ?", "choix": ["0,01 %","0,8 %","5 %","15 %"], "bonne": 1, "explication": "Au moins 0,8 % des patients sous clozapine développent une agranulocytose, potentiellement fatale, d'où la surveillance hématologique obligatoire.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "À quelle période la majorité des agranulocytoses sous clozapine surviennent-elles ?", "choix": ["Au-delà de 2 ans","Dans les 18 premières semaines","Toujours après 1 an","Uniquement à l'arrêt"], "bonne": 1, "explication": "Plus de 80 % des agranulocytoses surviennent dans les 18 premières semaines de traitement, période de vigilance maximale.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Le risque d'agranulocytose sous clozapine est-il dose-dépendant ?", "choix": ["Oui, strictement","Non, il n'est pas lié à la dose","Seulement au-delà de 600 mg/j","Seulement chez l'enfant"], "bonne": 1, "explication": "Le risque hématologique n'est pas dose-dépendant, contrairement à d'autres effets indésirables de la clozapine (sédation, hypersalivation).", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Qu'est-ce que la neutropénie ethnique bénigne (BEN) ?", "choix": ["Une agranulocytose lente","Une leucopénie constitutionnelle liée à la margination des neutrophiles, fréquente chez les sujets d'origine afro-caribéenne","Une réaction allergique à la clozapine","Un signe précoce d'agranulocytose"], "bonne": 1, "explication": "La BEN correspond à des neutrophiles plus marginés (donc une NFS apparemment basse) chez certaines populations ; des seuils adaptés permettent souvent de poursuivre la clozapine.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel médicament peut être utilisé pour remonter la NFS et permettre de poursuivre la clozapine en cas de neutropénie ?", "choix": ["Valproate","Lithium","Carbamazépine","Aripiprazole"], "bonne": 1, "explication": "Le lithium élève la leucocytose et a permis de poursuivre la clozapine chez certains patients. Attention : il ne protège PAS d'une vraie agranulocytose induite.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Le lithium protège-t-il contre l'agranulocytose vraie induite par la clozapine ?", "choix": ["Oui, complètement","Non, il ne protège pas de l'agranulocytose vraie","Oui, mais seulement à dose toxique","Uniquement en association au G-CSF"], "bonne": 1, "explication": "Le lithium augmente la leucocytose mais ne protège pas d'une agranulocytose vraie ; des cas fatals sous association ont été rapportés. Si la NFS chute malgré le lithium, envisager l'arrêt.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle association est formellement contre-indiquée avec la clozapine en raison du risque hématologique additif ?", "choix": ["Sertraline","Carbamazépine","Lamotrigine","Lorazépam"], "bonne": 1, "explication": "La carbamazépine, par son risque propre d'agranulocytose, est contre-indiquée avec la clozapine (risque additif de dyscrasie sanguine).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Que faire chez un patient ayant présenté une agranulocytose franche clairement induite par la clozapine ?", "choix": ["Réintroduire à dose réduite","Ne pas réintroduire la clozapine","Réintroduire sous couvert de lithium","Réintroduire sous G-CSF systématique"], "bonne": 1, "explication": "Une agranulocytose clozapine-induite avérée contre-indique en règle toute réintroduction : la seconde réaction survient plus vite, plus sévère et plus durable.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Parmi les facteurs de risque d'agranulocytose sous clozapine, lequel est correct ?", "choix": ["Âge jeune et faible NFS de base","Sexe masculin exclusivement","Tabagisme actif","IMC élevé"], "bonne": 0, "explication": "Les facteurs de risque incluent une NFS de base basse et certains terrains (origine afro-caribéenne, âge) ; le risque diminue avec l'âge croissant par décennie selon une cohorte.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle proportion de patients développant une dyscrasie à l'arrêt de la clozapine en refera une en cas de ré-exposition ?", "choix": ["Environ 1 sur 100","Environ 1 sur 3","La quasi-totalité","Aucun"], "bonne": 1, "explication": "Environ un tiers des patients ayant arrêté pour neutropénie/agranulocytose referont une dyscrasie en cas de ré-exposition, en règle plus précoce et plus sévère.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Le G-CSF utilisé pour maintenir la clozapine comporte quel risque principal ?", "choix": ["Aucun risque connu","Masquer une neutropénie/agranulocytose en évolution","Provoquer une hyperkaliémie","Allonger le QT"], "bonne": 1, "explication": "Le G-CSF peut masquer une neutropénie en évolution et exposer à des conséquences sévères ; sa sécurité au long cours est mal établie. Avis hématologique indispensable.", "source": "Maudsley Prescribing Guidelines" }
+        ]},
+        { "id": "thymoreg", "titre": "Thymorégulateurs et anticonvulsivants", "questions": [
+          { "q": "Pourquoi la titration de la lamotrigine doit-elle être très lente ?", "choix": ["Pour éviter la sédation","Pour réduire le risque de rash sévère (Stevens-Johnson)","Pour limiter la prise de poids","Pour prévenir l'hyponatrémie"], "bonne": 1, "explication": "La titration lente diminue le risque de rash grave (Stevens-Johnson, Lyell). Tout rash impose l'arrêt et la non-réintroduction sauf cause clairement non médicamenteuse.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel est l'intérêt principal de la lamotrigine dans le trouble bipolaire ?", "choix": ["Traitement de la manie aiguë","Prévention des épisodes dépressifs en entretien","Sédation rapide","Effet anti-suicide majeur"], "bonne": 1, "explication": "La lamotrigine est surtout utile en maintenance, avec la meilleure efficacité dans la prophylaxie des épisodes dépressifs. Elle est inefficace sur la manie aiguë.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Comment l'association au valproate modifie-t-elle la posologie de lamotrigine ?", "choix": ["Elle double les taux : titration plus lente, dose cible plus basse","Elle divise les taux par deux","Aucune interaction","Elle impose un dosage plasmatique hebdomadaire"], "bonne": 0, "explication": "Le valproate double les concentrations de lamotrigine : on débute plus bas (25 mg un jour sur deux), on titre plus lentement et la dose cible est réduite (max ~100 mg/j).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Si la lamotrigine a été interrompue plus de 5 demi-vies, que faire à la reprise ?", "choix": ["Reprendre à la dose antérieure","Recommencer la titration initiale pour limiter le risque de rash","Doubler la dose antérieure","Ajouter un corticoïde préventif"], "bonne": 1, "explication": "Après un arrêt > 5 demi-vies, on reprend selon le schéma de titration initial pour minimiser le risque de rash.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quels paramètres faut-il surveiller sous valproate ?", "choix": ["Uniquement la valproatémie","NFS, bilan hépatique, ± ammoniémie selon contexte","Fonction thyroïdienne seule","EEG mensuel"], "bonne": 1, "explication": "Le valproate impose une surveillance hépatique et hématologique (thrombopénie) ; l'ammoniémie est utile en cas de confusion (encéphalopathie hyperammoniémique).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Pourquoi le valproate est-il à éviter chez la femme en âge de procréer sans contraception efficace ?", "choix": ["Risque d'hypothyroïdie fœtale","Risque tératogène majeur (anomalies du tube neural, troubles neurodéveloppementaux)","Risque d'allongement du QT fœtal","Aucune raison particulière"], "bonne": 1, "explication": "Le valproate est hautement tératogène (spina bifida, troubles neurodéveloppementaux). En France, encadrement réglementaire strict (programme de prévention des grossesses, accord de soins).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel test génétique est recommandé avant la carbamazépine chez les patients d'origine asiatique ?", "choix": ["HLA-B*5701","HLA-B*1502","CYP2C19","MTHFR"], "bonne": 1, "explication": "L'allèle HLA-B*1502 (fréquent en Asie du Sud-Est) augmente fortement le risque de Stevens-Johnson/Lyell sous carbamazépine ; un dépistage est recommandé.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle particularité pharmacocinétique caractérise la carbamazépine ?", "choix": ["Elle inhibe le CYP3A4","Elle induit son propre métabolisme (auto-induction) en 2–4 semaines","Elle a une demi-vie > 100 h stable","Elle n'a aucune interaction"], "bonne": 1, "explication": "La carbamazépine est un inducteur enzymatique puissant qui auto-induit son métabolisme en 2–4 semaines, abaissant ses propres taux et ceux de nombreux médicaments (dont les contraceptifs oraux).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel est le taux thérapeutique de carbamazépine retenu dans l'épilepsie ?", "choix": ["0,5–2 mcg/mL","4–12 mcg/mL","20–30 mcg/mL","50–100 mcg/mL"], "bonne": 1, "explication": "La fourchette thérapeutique de la carbamazépine est de 4–12 mcg/mL dans l'épilepsie. Surveillance NFS, natrémie (SIADH), bilan hépatique.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Lors d'un relais entre thymorégulateurs, quelle est la règle générale ?", "choix": ["Switch immédiat sans chevauchement","Chevauchement progressif sur au moins deux semaines","Arrêt d'une semaine entre les deux","Doubler les deux pendant un mois"], "bonne": 1, "explication": "On recommande un cross-taper progressif (≥ 2 semaines) entre lithium, valproate, carbamazépine ; le passage vers la lamotrigine impose une titration encore plus lente.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel anticonvulsivant n'est PAS efficace sur la manie aiguë ?", "choix": ["Valproate","Carbamazépine","Lamotrigine","Aucun des trois"], "bonne": 2, "explication": "La lamotrigine n'a pas d'efficacité sur la manie aiguë : son intérêt est la prévention des rechutes dépressives. Valproate et carbamazépine agissent sur la manie.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "La lamotrigine agit notamment en réduisant la libération de quel neurotransmetteur excitateur ?", "choix": ["GABA","Glutamate","Acétylcholine","Histamine"], "bonne": 1, "explication": "La lamotrigine bloque les canaux sodiques voltage-dépendants et réduit la libération de glutamate, ce qui pourrait expliquer son profil particulier dans la dépression bipolaire.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quel effet des contraceptifs hormonaux sur la lamotrigine faut-il connaître ?", "choix": ["Ils augmentent fortement ses taux","Ils peuvent abaisser ses taux (dose à réajuster)","Aucune interaction","Ils provoquent une toxicité hépatique"], "bonne": 1, "explication": "Les contraceptifs hormonaux peuvent abaisser les taux de lamotrigine (dose parfois à doubler) ; une remontée des taux peut survenir pendant la semaine d'arrêt pilulaire.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "syndromes", "titre": "Syndrome sérotoninergique et syndrome malin", "questions": [
+          { "q": "Quel signe est plus spécifique du syndrome sérotoninergique que du syndrome malin des neuroleptiques ?", "choix": ["Rigidité « tuyau de plomb »","Clonus (notamment aux membres inférieurs)","Hyperthermie","Élévation des CPK"], "bonne": 1, "explication": "Le clonus, surtout aux membres inférieurs, est évocateur du syndrome sérotoninergique. Le syndrome malin donne plutôt une rigidité « tuyau de plomb ».", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle est la cinétique d'installation typique du syndrome sérotoninergique ?", "choix": ["Sur plusieurs semaines","Très rapide (quelques heures)","Toujours après 1 mois","Uniquement à l'arrêt"], "bonne": 1, "explication": "Le syndrome sérotoninergique s'installe de façon aiguë (en 3–4 h après changement), à la différence du syndrome malin, souvent plus progressif.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel est le traitement de première intention du syndrome sérotoninergique, après arrêt des agents en cause ?", "choix": ["Bromocriptine","Benzodiazépines","Dantrolène","Halopéridol"], "bonne": 1, "explication": "Après arrêt des sérotoninergiques et mesures de support, les benzodiazépines sont le traitement de première ligne ; la cyproheptadine est une option de seconde ligne.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel traitement de seconde ligne, antagoniste sérotoninergique, peut être utilisé dans le syndrome sérotoninergique ?", "choix": ["Cyproheptadine","Dantrolène","Bromocriptine","Propranolol"], "bonne": 0, "explication": "La cyproheptadine (antihistaminique antagoniste 5-HT) est une option de seconde ligne. À éviter si un syndrome anticholinergique ne peut être écarté.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle association médicamenteuse expose au plus fort risque de syndrome sérotoninergique sévère ?", "choix": ["Deux benzodiazépines","IMAO + autre agent sérotoninergique","ISRS + bêtabloquant","Lithium + antipsychotique"], "bonne": 1, "explication": "Les formes les plus sévères impliquent souvent un IMAO associé à un autre sérotoninergique, ou des situations de surdosage. Respecter les fenêtres de wash-out.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Dans le syndrome malin des neuroleptiques, quel traitement spécifique peut être utilisé en milieu médical ?", "choix": ["Cyproheptadine","Bromocriptine + dantrolène","Flumazénil","Naloxone"], "bonne": 1, "explication": "La prise en charge du syndrome malin comporte réhydratation, refroidissement, benzodiazépines, et bromocriptine/dantrolène dans les formes sévères, ± ECT.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Après un syndrome malin des neuroleptiques, comment réintroduire un antipsychotique ?", "choix": ["Immédiatement à pleine dose","Après ≥ 5 jours d'arrêt, à très faible dose et titration lente","Jamais","Uniquement par voie dépôt"], "bonne": 1, "explication": "On attend ≥ 5 jours (résolution complète), puis on réintroduit à très faible dose, lentement, en surveillant température, pouls, TA et CPK, en privilégiant une molécule à faible affinité dopaminergique.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel antipsychotique privilégier après un syndrome malin, en raison de sa faible affinité dopaminergique ?", "choix": ["Halopéridol","Quétiapine ou clozapine","Rispéridone dépôt","Amisulpride"], "bonne": 1, "explication": "On privilégie une molécule structurellement différente et/ou à faible affinité D2 (quétiapine, clozapine) ; éviter les formes dépôt et les neuroleptiques conventionnels puissants.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quels médicaments non psychiatriques peuvent contribuer à un syndrome sérotoninergique ?", "choix": ["Tramadol, fentanyl, linézolide, dextrométhorphane","Amoxicilline, paracétamol","Furosémide, spironolactone","Oméprazole, ranitidine"], "bonne": 0, "explication": "De nombreux agents non psychiatriques sont sérotoninergiques : tramadol, fentanyl, mépéridine, linézolide, dextrométhorphane. À intégrer dans l'analyse du risque.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle différence clinique distingue rigidité du syndrome malin et hypertonie sérotoninergique ?", "choix": ["Aucune","Syndrome malin : rigidité « tuyau de plomb » ; sérotoninergique : hyperréflexie, myoclonies, clonus","Le syndrome malin donne un clonus isolé","Le syndrome sérotoninergique donne une akinésie"], "bonne": 1, "explication": "Le syndrome malin se caractérise par une rigidité « tuyau de plomb » et une hyporéflexie ; le syndrome sérotoninergique par hyperréflexie, myoclonies et clonus.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "antidepresseurs", "titre": "Antidépresseurs : effets indésirables et relais", "questions": [
+          { "q": "Quel ISRS/IRSN est le plus à risque de syndrome de sevrage à l'arrêt ?", "choix": ["Fluoxétine","Paroxétine et venlafaxine","Sertraline","Vortioxétine"], "bonne": 1, "explication": "Paroxétine, fluvoxamine et venlafaxine, à demi-vie courte, donnent les syndromes de sevrage les plus marqués ; la fluoxétine, à longue demi-vie, en donne le moins.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel antidépresseur peut être arrêté quasi abruptement grâce à sa longue demi-vie ?", "choix": ["Paroxétine","Venlafaxine","Fluoxétine","Duloxétine"], "bonne": 2, "explication": "La fluoxétine et son métabolite actif ont une demi-vie longue : elle s'auto-titre et peut souvent être arrêtée sans sevrage notable. Stratégie de relais : passer par la fluoxétine.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quels symptômes évoquent un syndrome de sevrage aux ISRS/IRSN ?", "choix": ["Hypertension et bradycardie","Vertiges, nausées, sensations de décharges électriques, irritabilité, insomnie","Constipation isolée","Polyurie"], "bonne": 1, "explication": "Le syndrome de sevrage associe vertiges, nausées, céphalées, irritabilité, insomnie, sensations de décharges électriques (« brain zaps ») ; inconfortable mais non dangereux en règle.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle population est la plus à risque d'hyponatrémie sous ISRS ?", "choix": ["Adolescents","Sujets âgés (surtout si diurétiques, insuffisance rénale/cardiaque)","Sportifs","Femmes enceintes"], "bonne": 1, "explication": "L'hyponatrémie (souvent par SIADH) touche surtout le sujet âgé, en particulier sous diurétiques ou avec comorbidités. Doser la natrémie devant confusion ou asthénie.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Comment les ISRS augmentent-ils le risque hémorragique ?", "choix": ["En allongeant le TP","En déplétant la sérotonine plaquettaire (agrégation réduite)","En augmentant le facteur VIII","En provoquant une thrombopénie centrale"], "bonne": 1, "explication": "Les ISRS inhibent la recapture plaquettaire de sérotonine, réduisant l'agrégation. Risque accru de saignement digestif, majoré par AINS, aspirine ou anticoagulants.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle co-prescription multiplie environ par 4 le risque de saignement digestif sous ISRS ?", "choix": ["Paracétamol","AINS","IPP","Statines"], "bonne": 1, "explication": "L'association ISRS + AINS quadruple environ le risque de saignement digestif haut ; l'aspirine à faible dose le double. Sujets âgés et antécédents de saignement les plus exposés.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel ISRS est un inhibiteur puissant du CYP2D6, avec interactions notables ?", "choix": ["Sertraline","Paroxétine","Citalopram","Escitalopram"], "bonne": 1, "explication": "La paroxétine est un inhibiteur puissant du CYP2D6 : prudence avec les pro-médicaments activés par cette voie (tramadol, codéine, tamoxifène), dont l'effet est réduit.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Pour quelle raison la paroxétine est-elle l'ISRS le moins favorisé ?", "choix": ["Inefficacité","Profil d'effets indésirables (sexuels, prise de poids, sédation) et sevrage","Coût élevé","Allongement du QT majeur"], "bonne": 1, "explication": "La paroxétine cumule effets sexuels marqués, prise de poids, sédation, constipation, interactions (2D6) et syndrome de sevrage, ce qui la fait moins privilégier malgré ses indications anxieuses larges.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel est le délai de wash-out recommandé entre un ISRS et un IMAO ?", "choix": ["24 heures","Au moins deux semaines (5 semaines pour la fluoxétine)","3 jours","Aucun délai nécessaire"], "bonne": 1, "explication": "Un wash-out d'au moins deux semaines est requis avant un IMAO ; pour la fluoxétine, compter ~5 semaines du fait de la longue demi-vie, afin d'éviter un syndrome sérotoninergique.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle stratégie réduit le sevrage lors de l'arrêt d'un antidépresseur à demi-vie courte ?", "choix": ["Arrêt brutal le week-end","Relais transitoire par fluoxétine puis arrêt","Doublement de dose avant arrêt","Ajout systématique d'un antipsychotique"], "bonne": 1, "explication": "Une stratégie validée consiste à relayer par la fluoxétine 1–2 semaines, puis à l'arrêter, son auto-titrage limitant les symptômes de sevrage.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel antidépresseur a un faible risque de syndrome de sevrage ?", "choix": ["Paroxétine","Venlafaxine","Bupropion","Fluvoxamine"], "bonne": 2, "explication": "Le bupropion et la mirtazapine ont un faible risque de sevrage et tolèrent un arrêt plus rapide, contrairement à la paroxétine, la fluvoxamine ou la venlafaxine.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Lors d'un relais entre deux ISRS de même mécanisme, quelle approche est généralement possible ?", "choix": ["Wash-out de 2 semaines obligatoire","Switch direct (pas d'interaction significative entre deux inhibiteurs de recapture)","Cross-taper sur 3 mois","Arrêt complet avant reprise"], "bonne": 1, "explication": "Entre deux ISRS, un switch direct est souvent possible (même mécanisme, pas d'interaction notable). La prudence s'impose surtout avec la paroxétine vers un substrat du 2D6 (ex. vortioxétine).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle indication FDA particulièrement large caractérise la paroxétine ?", "choix": ["Aucune","Large éventail de troubles anxieux (TAG, panique, phobie sociale, ESPT, TOC, TDPM)","Uniquement la dépression","Uniquement le TOC"], "bonne": 1, "explication": "La paroxétine a le plus large éventail d'indications anxieuses, ce qui la fait parfois privilégier chez les patients très anxieux, malgré ses inconvénients.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "benzodiazepines", "titre": "Benzodiazépines : équivalences et sevrage", "questions": [
+          { "q": "Pourquoi convertir une benzodiazépine de courte durée en diazépam lors d'un sevrage ?", "choix": ["Pour augmenter l'effet anxiolytique","Sa longue demi-vie provoque un sevrage moins sévère et moins de symptômes inter-doses","Pour accélérer l'élimination","Pour éviter toute somnolence"], "bonne": 1, "explication": "Le diazépam, à longue demi-vie, lisse les concentrations et atténue le sevrage. Les équivalences ne sont qu'approximatives (demi-vies et sédation variables).", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle précaution s'impose pour la substitution par diazépam chez l'insuffisant hépatique ?", "choix": ["Aucune","Risque d'accumulation à des taux toxiques : substitution parfois inadaptée","Doubler la dose","Préférer une voie IV"], "bonne": 1, "explication": "Chez l'insuffisant hépatique, diazépam et autres molécules longues peuvent s'accumuler ; la substitution peut être inappropriée. Préférer parfois des molécules sans métabolite actif.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel schéma de réduction des benzodiazépines est recommandé ?", "choix": ["Arrêt brutal","Réduction progressive (≈ 1/8 de la dose par quinzaine), adaptée au patient","Réduction de 50 % par semaine","Alternance un jour sur deux d'emblée"], "bonne": 1, "explication": "Une réduction systématique et progressive (de l'ordre d'un huitième de dose toutes les deux semaines) est deux fois plus efficace qu'un simple conseil d'arrêt.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quels symptômes peuvent survenir lors d'un sevrage en benzodiazépines ?", "choix": ["Uniquement une somnolence","Anxiété, insomnie, paresthésies, troubles visuels, dépersonnalisation, voire convulsions","Hypertension isolée","Aucun symptôme"], "bonne": 1, "explication": "Le sevrage associe symptômes physiques (raideur, paresthésies, troubles visuels, pseudo-grippe) et psychiques (anxiété, insomnie, dépersonnalisation, troubles mnésiques, rarement convulsions).", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel seuil de dose en équivalent diazépam est considéré comme potentiellement délétère à dépasser ?", "choix": ["5 mg/j","10 mg/j","30 mg/j","100 mg/j"], "bonne": 2, "explication": "Au-delà de 30 mg/j d'équivalent diazépam, le risque de retentissement augmente ; à éviter autant que possible.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle particularité explique le fort potentiel d'abus du diazépam ?", "choix": ["Sa demi-vie courte","Sa très haute liposolubilité (distribution rapide dans le SNC, « rush »)","Son absence de métabolite actif","Sa faible puissance"], "bonne": 1, "explication": "Le diazépam est la benzodiazépine la plus liposoluble : distribution très rapide dans le SNC, d'où un « rush » marqué et un potentiel d'abus accru en prise ponctuelle.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quand les symptômes de sevrage au diazépam peuvent-ils débuter après un arrêt brutal ?", "choix": ["Dans l'heure","3 à 5 jours après (et durer 10–14 jours)","Toujours après 1 mois","Jamais"], "bonne": 1, "explication": "Du fait de sa longue demi-vie et de ses métabolites actifs, le sevrage au diazépam peut n'apparaître que 3–5 jours après l'arrêt et durer 10–14 jours.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle est la durée maximale réglementaire de prescription des anxiolytiques benzodiazépiniques en France ?", "choix": ["28 jours","12 semaines","6 mois","1 an"], "bonne": 1, "explication": "En France, la durée de prescription des benzodiazépines anxiolytiques est limitée à 12 semaines (4 semaines pour les hypnotiques). À vérifier sur le Thésaurus ANSM / Vidal.", "source": "Réglementation française (à vérifier ANSM/Vidal)" },
+          { "q": "Tolérance : à quel effet du diazépam la tolérance se développe-t-elle le plus vite ?", "choix": ["À l'effet anxiolytique","À l'effet sédatif (en 2–4 semaines)","À l'effet myorelaxant uniquement","Aucune tolérance ne se développe"], "bonne": 1, "explication": "La tolérance à l'effet sédatif se développe plus rapidement (2–4 semaines) qu'à l'effet anxiolytique, ce qui peut conduire à des escalades de dose.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel effet indésirable paradoxal peut survenir sous benzodiazépine ?", "choix": ["Hypotension sévère","Irritabilité, agitation (réaction paradoxale)","Hypertension maligne","Bradycardie extrême"], "bonne": 1, "explication": "Des réactions paradoxales (irritabilité, agitation, désinhibition) peuvent survenir, notamment chez les sujets âgés ou vulnérables. Amnésie antérograde et chutes sont aussi à craindre.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle stratégie est validée pour réduire l'usage des benzodiazépines chez le sujet âgé ?", "choix": ["Arrêt imposé sans information","Intervention éducative basée sur l'auto-efficacité (ex. essai EMPOWER)","Substitution par un autre hypnotique au long cours","Maintien indéfini"], "bonne": 1, "explication": "Une approche éducative simple (théorie de l'auto-efficacité, essai EMPOWER) a conduit près d'un quart des sujets âgés utilisateurs chroniques à réduire/arrêter volontairement.", "source": "Maudsley Prescribing Guidelines" }
+        ]},
+        { "id": "stimulants", "titre": "Stimulants et TDAH", "questions": [
+          { "q": "Quel est le rapport de puissance approximatif entre méthylphénidate et amphétamine ?", "choix": ["Le méthylphénidate est deux fois plus puissant","Le méthylphénidate est environ deux fois moins puissant (Ritaline 10 mg ≈ Dexedrine 5 mg)","Ils sont équipuissants","Le méthylphénidate est dix fois plus puissant"], "bonne": 1, "explication": "Le méthylphénidate est environ moitié moins puissant que l'amphétamine (10 mg de méthylphénidate ≈ 5 mg de dextroamphétamine).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle est la voie métabolique principale du méthylphénidate ?", "choix": ["CYP3A4","CYP2D6","Carboxylestérase CES1A1 (non CYP450)","Glucuronoconjugaison"], "bonne": 2, "explication": "Le méthylphénidate est métabolisé par la carboxylestérase CES1A1, et non par le CYP450 ; sa demi-vie courte (2–4 h) explique les formes à libération prolongée.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel non-stimulant est privilégié en cas de TDAH avec tics ou ESPT ?", "choix": ["Méthylphénidate IR","Guanfacine LP (ou clonidine LP)","Amphétamine","Modafinil"], "bonne": 1, "explication": "Devant des tics, un ESPT ou une hyperactivité marquée, la guanfacine LP (ou la clonidine LP) est une bonne option ; parmi les stimulants, le méthylphénidate est préféré pour les tics.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle est une contre-indication relative forte à un stimulant ?", "choix": ["Antécédent d'asthme","Antécédent d'infarctus ou d'arythmie (avis cardiologique requis)","Migraine","Reflux gastro-œsophagien"], "bonne": 1, "explication": "Un antécédent cardiaque (infarctus, arythmie) impose un avis cardiologique préalable ; les amphétamines sont à éviter en cas de maladie cardiovasculaire connue ou suspectée.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel non-stimulant est indiqué dans le TDAH isolé, sans comorbidité ?", "choix": ["Bupropion","Atomoxétine","Lithium","Quétiapine"], "bonne": 1, "explication": "L'atomoxétine (inhibiteur de la recapture de la noradrénaline) est une option non stimulante dans le TDAH isolé ; le bupropion est plutôt envisagé en cas de dépression comorbide.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quels effets indésirables sont les plus fréquents sous méthylphénidate ?", "choix": ["Hypersomnie et prise de poids","Insomnie, céphalées, nervosité, anorexie, perte de poids, labilité affective","Hypersalivation","Bradycardie"], "bonne": 1, "explication": "Les effets fréquents associent insomnie, céphalées, nervosité, douleurs abdominales, anorexie, perte de poids, labilité affective et parfois tics.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Que dit une revue Cochrane sur méthylphénidate et tics chez l'enfant TDAH ?", "choix": ["Il aggrave toujours les tics","Il n'aggrave pas les tics, voire les améliore parfois","Il provoque systématiquement des tics","Données inexistantes"], "bonne": 1, "explication": "Une revue Cochrane (8 essais randomisés) montre que le méthylphénidate n'aggrave pas les tics chez l'enfant TDAH avec trouble tic, et peut même les améliorer.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle règle réglementaire française s'applique au méthylphénidate ?", "choix": ["Prescription libre sans contrainte","Ordonnance sécurisée, durée de prescription limitée à 28 jours (règles des stupéfiants)","Ordonnance simple, 6 mois","Délivrance hospitalière exclusive"], "bonne": 1, "explication": "En France, le méthylphénidate relève des règles des stupéfiants : ordonnance sécurisée, durée maximale de prescription de 28 jours, délivrance fractionnée. Modalités à vérifier (ANSM/Vidal).", "source": "Réglementation française (à vérifier ANSM/Vidal)" },
+          { "q": "En cas d'effets indésirables sous amphétamine, vers quel stimulant peut-on basculer ?", "choix": ["Méthamphétamine","Méthylphénidate (Ritaline)","Modafinil obligatoirement","Aucun, arrêt définitif"], "bonne": 1, "explication": "En cas d'effets indésirables sous amphétamine (« wired »), un passage au méthylphénidate IR est proposé, ce dernier donnant en règle moins de sensation de surstimulation.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Comment réaliser un switch entre deux stimulants ?", "choix": ["Cross-taper sur 4 semaines","Dernière dose du stimulant A jour 1, début du B jour 2, à dose un peu plus basse que l'équivalence calculée","Wash-out de 2 semaines","Association des deux à pleine dose"], "bonne": 1, "explication": "Le switch est simple : pas de cross-taper, dernière dose de A le jour 1, début de B le jour 2, en démarrant prudemment un peu sous la dose équivalente calculée.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Le dexméthylphénidate (Focalin) par rapport au méthylphénidate racémique :", "choix": ["Est deux fois moins puissant","Est environ deux fois plus puissant (utiliser ~la moitié de la dose)","A la même puissance","N'est pas un isomère du méthylphénidate"], "bonne": 1, "explication": "Le dexméthylphénidate est l'isomère dextro, environ deux fois plus puissant : on utilise approximativement la moitié de la dose du méthylphénidate racémique.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "cyp450", "titre": "CYP450 et interactions médicamenteuses", "questions": [
+          { "q": "Quel psychotrope est un inducteur enzymatique puissant à large spectre ?", "choix": ["Fluoxétine","Carbamazépine","Sertraline","Aripiprazole"], "bonne": 1, "explication": "La carbamazépine induit de nombreux CYP (1A2, 2B6, 2C9/19, 3A4) et la P-gp, abaissant les taux de nombreux substrats, dont les contraceptifs oraux et la clozapine.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel ISRS est l'inhibiteur le plus puissant du CYP2D6 ?", "choix": ["Sertraline","Citalopram","Paroxétine","Escitalopram"], "bonne": 2, "explication": "La paroxétine (et la fluoxétine) inhibent fortement le CYP2D6 ; prudence avec les pro-médicaments activés par cette voie (codéine, tramadol, tamoxifène).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel facteur environnemental induit le CYP1A2 et modifie les taux de clozapine et d'olanzapine ?", "choix": ["L'alcool","Le tabac (combustion)","Le café","Le pamplemousse"], "bonne": 1, "explication": "La fumée de tabac (hydrocarbures, pas la nicotine) induit le CYP1A2 : l'arrêt du tabac peut augmenter fortement les taux de clozapine et d'olanzapine.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "L'association codéine + paroxétine pose quel problème ?", "choix": ["Surdosage en codéine","Effet antalgique réduit (codéine non convertie en morphine)","Allongement du QT","Hyponatrémie"], "bonne": 1, "explication": "La codéine nécessite le CYP2D6 pour être convertie en morphine ; un inhibiteur puissant comme la paroxétine réduit son efficacité antalgique.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Pourquoi l'auto-induction de la carbamazépine est-elle cliniquement importante ?", "choix": ["Elle augmente ses taux au fil du temps","Elle abaisse ses propres taux en 2–4 semaines (réajustement de dose nécessaire)","Elle n'a aucun impact","Elle inhibe le CYP3A4"], "bonne": 1, "explication": "La carbamazépine induit son propre métabolisme en 2–4 semaines, abaissant ses taux : un réajustement posologique est souvent nécessaire après l'instauration.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quel risque l'association carbamazépine + contraceptif oral comporte-t-elle ?", "choix": ["Thrombose veineuse","Échec de contraception (taux d'hormones abaissés)","Hyperkaliémie","Allongement du QT"], "bonne": 1, "explication": "La carbamazépine, inducteur enzymatique, abaisse les taux des contraceptifs oraux et expose à des grossesses non désirées : envisager une autre méthode contraceptive.", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Quelle benzodiazépine est principalement métabolisée par le CYP3A4, exposant aux interactions ?", "choix": ["Lorazépam","Oxazépam","Diazépam","Témazépam"], "bonne": 2, "explication": "Le diazépam est métabolisé par le CYP3A4 et le CYP2C19 ; lorazépam, oxazépam et témazépam, glucuronoconjugués, sont moins sujets aux interactions (utiles chez l'insuffisant hépatique).", "source": "Carlat Medication Fact Book (7e éd.)" },
+          { "q": "Un inhibiteur du CYP450 associé à un agent sérotoninergique augmente quel risque ?", "choix": ["Hypotension","Élévation des taux et risque de syndrome sérotoninergique","Induction enzymatique","Hypoglycémie"], "bonne": 1, "explication": "Un inhibiteur du CYP450 peut élever les concentrations d'un sérotoninergique et accroître le risque de syndrome sérotoninergique. Vigilance lors des associations.", "source": "Carlat Medication Fact Book (7e éd.)" }
+        ]},
+        { "id": "antipsychotiques", "titre": "Antipsychotiques : effets extrapyramidaux et métaboliques", "questions": [
+          { "q": "Quel antipsychotique de seconde génération est associé au plus fort gain pondéral et risque métabolique ?", "choix": ["Aripiprazole","Olanzapine (et clozapine)","Lurasidone","Zipraidone"], "bonne": 1, "explication": "Olanzapine et clozapine entraînent les plus fortes prises de poids et perturbations métaboliques (glycémie, lipides). Surveillance métabolique régulière recommandée.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quel effet extrapyramidal aigu peut survenir dans les premières heures/jours d'un neuroleptique ?", "choix": ["Dyskinésie tardive","Dystonie aiguë","Cataracte","Hyponatrémie"], "bonne": 1, "explication": "La dystonie aiguë (torticolis, crise oculogyre) survient précocement, surtout avec les neuroleptiques puissants ; traitement par anticholinergique parentéral.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quel est le traitement d'une dystonie aiguë sous neuroleptique ?", "choix": ["Augmenter le neuroleptique","Anticholinergique parentéral (ex. tropatépine/bipéridène)","Bêtabloquant","Benzodiazépine seule à forte dose"], "bonne": 1, "explication": "La dystonie aiguë répond rapidement à un anticholinergique parentéral. La réduction ou le changement de neuroleptique se discute ensuite.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "La dyskinésie tardive se caractérise par :", "choix": ["Une akinésie réversible","Des mouvements involontaires (souvent bucco-linguo-faciaux) d'apparition tardive, parfois irréversibles","Une rigidité aiguë","Un tremblement de repos isolé"], "bonne": 1, "explication": "La dyskinésie tardive associe des mouvements involontaires, souvent orofaciaux, après exposition prolongée ; risque accru avec les neuroleptiques conventionnels, parfois irréversible.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quel antipsychotique est réputé pour son très faible risque d'effets extrapyramidaux ?", "choix": ["Halopéridol","Clozapine","Rispéridone à forte dose","Amisulpride à forte dose"], "bonne": 1, "explication": "La clozapine a un risque très faible d'effets extrapyramidaux et de dyskinésie tardive, l'un de ses intérêts dans la schizophrénie résistante (au prix d'une surveillance hématologique).", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "Quelle surveillance métabolique est recommandée sous antipsychotique de seconde génération ?", "choix": ["EEG annuel","Poids/IMC, tour de taille, glycémie, bilan lipidique","Audiométrie","Dosage urinaire des catécholamines"], "bonne": 1, "explication": "On surveille poids/IMC, tour de taille, glycémie à jeun (± HbA1c) et bilan lipidique, à l'instauration puis régulièrement, du fait du risque de syndrome métabolique.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "L'akathisie se manifeste par :", "choix": ["Une somnolence diurne","Une impatience motrice, impossibilité de rester immobile","Une rigidité segmentaire","Une amnésie"], "bonne": 1, "explication": "L'akathisie est une impatience motrice subjective et objective (impossibilité de rester en place), souvent pénible ; elle peut majorer l'agitation et le risque suicidaire. Réduction de dose, ± propranolol.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quelle hormone est élevée par les antipsychotiques antagonistes D2 puissants (ex. rispéridone, amisulpride) ?", "choix": ["Cortisol","Prolactine","TSH","Insuline"], "bonne": 1, "explication": "Le blocage D2 tubéro-infundibulaire élève la prolactine (galactorrhée, aménorrhée, dysfonction sexuelle). Rispéridone, amisulpride et antipsychotiques conventionnels sont les plus en cause.", "source": "Stahl's Essential Psychopharmacology" },
+          { "q": "Quel antipsychotique a une faible affinité D2 et un profil favorable après un syndrome malin ?", "choix": ["Halopéridol","Quétiapine","Rispéridone","Flupentixol"], "bonne": 1, "explication": "La quétiapine (faible affinité D2) et la clozapine sont privilégiées après un syndrome malin ; éviter les formes dépôt et les neuroleptiques conventionnels puissants.", "source": "Maudsley Prescribing Guidelines" },
+          { "q": "La mortalité du syndrome malin est-elle différente selon le type d'antipsychotique ?", "choix": ["Identique","Probablement plus faible avec les antipsychotiques de seconde génération (rigidité moins fréquente)","Plus élevée avec la clozapine","Nulle avec les seconde génération"], "bonne": 1, "explication": "La mortalité du syndrome malin paraît plus faible avec les antipsychotiques de seconde génération, et la rigidité y est moins constante, bien que les symptômes restent comparables.", "source": "Maudsley Prescribing Guidelines" }
+        ]}
+      ]
+    };
+
+    // ---------- État ----------
+    let state = {
+        themeId: null,
+        questions: [],   // questions de la session courante (déjà préparées)
+        index: 0,
+        score: 0,
+        answered: false,
+        wrong: []        // { q, choices, correctIdx, chosenIdx, explication, source, theme }
+    };
+
+    function shuffleArray(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    // ---------- Accueil ----------
+    function renderHome() {
+        const totalQ = QCM_DATA.themes.reduce((s, t) => s + t.questions.length, 0);
+        document.getElementById('all-count').textContent =
+            QCM_DATA.themes.length + ' thèmes · ' + totalQ + ' questions';
+        document.getElementById('disclaimer-home').textContent = QCM_DATA.disclaimer;
+
+        const palette = ['indigo','violet','sky','rose','amber','emerald','cyan','fuchsia','teal','blue'];
+        const list = document.getElementById('theme-list');
+        list.innerHTML = QCM_DATA.themes.map((t, i) => {
+            const c = palette[i % palette.length];
+            return `
+            <button onclick="startQuiz('${t.id}')" class="group text-left bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-${c}-300 transition-all overflow-hidden">
+                <div class="h-1.5 bg-${c}-500"></div>
+                <div class="p-5">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="p-2.5 bg-${c}-50 text-${c}-600 rounded-lg group-hover:bg-${c}-600 group-hover:text-white transition-colors">
+                            <i data-lucide="brain-circuit" width="20" height="20"></i>
+                        </div>
+                        <span class="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-500 rounded">${t.questions.length} Q</span>
+                    </div>
+                    <div class="font-bold text-slate-800 group-hover:text-${c}-600 transition-colors leading-snug">${t.titre}</div>
+                </div>
+            </button>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    // ---------- Préparation d'une session ----------
+    function startQuiz(themeId) {
+        const shuffleQ = document.getElementById('opt-shuffle-q').checked;
+        const shuffleA = document.getElementById('opt-shuffle-a').checked;
+
+        let pool = [];
+        if (themeId === 'ALL') {
+            QCM_DATA.themes.forEach(t => t.questions.forEach(q => pool.push({ ...q, theme: t.titre })));
+        } else {
+            const t = QCM_DATA.themes.find(x => x.id === themeId);
+            t.questions.forEach(q => pool.push({ ...q, theme: t.titre }));
+        }
+
+        if (shuffleQ) pool = shuffleArray(pool);
+
+        // Préparer chaque question (mélange éventuel des réponses)
+        const prepared = pool.map(q => {
+            let order = q.choix.map((_, idx) => idx);
+            if (shuffleA) order = shuffleArray(order);
+            const choix = order.map(i => q.choix[i]);
+            const correctIdx = order.indexOf(q.bonne);
+            return { q: q.q, choix, correctIdx, explication: q.explication, source: q.source, theme: q.theme };
+        });
+
+        state = { themeId, questions: prepared, index: 0, score: 0, answered: false, wrong: [] };
+
+        document.getElementById('screen-home').classList.add('hidden');
+        document.getElementById('screen-results').classList.add('hidden');
+        document.getElementById('screen-quiz').classList.remove('hidden');
+
+        const label = themeId === 'ALL'
+            ? 'Tous les thèmes'
+            : QCM_DATA.themes.find(x => x.id === themeId).titre;
+        document.getElementById('quiz-theme-label').textContent = label;
+
+        renderQuestion();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderQuestion() {
+        const total = state.questions.length;
+        const cur = state.questions[state.index];
+        state.answered = false;
+
+        document.getElementById('quiz-progress-label').textContent =
+            'Question ' + (state.index + 1) + ' / ' + total;
+        document.getElementById('quiz-progress-bar').style.width =
+            ((state.index) / total * 100) + '%';
+        document.getElementById('quiz-question').textContent = cur.q;
+        document.getElementById('quiz-score-live').textContent =
+            'Score : ' + state.score + ' / ' + state.index;
+
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const cont = document.getElementById('quiz-choices');
+        cont.innerHTML = cur.choix.map((c, i) => `
+            <button data-idx="${i}" onclick="answer(${i})"
+                class="choice-btn w-full text-left flex items-start gap-3 p-4 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40">
+                <span class="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-sm letter">${letters[i]}</span>
+                <span class="pt-0.5 text-slate-800">${c}</span>
+            </button>`).join('');
+
+        document.getElementById('quiz-feedback').classList.add('hidden');
+        const nextBtn = document.getElementById('quiz-next-btn');
+        nextBtn.classList.add('hidden');
+        nextBtn.classList.remove('flex');
+        document.getElementById('quiz-next-label').textContent =
+            (state.index + 1 < total) ? 'Suivante' : 'Voir le résultat';
+
+        lucide.createIcons();
+    }
+
+    function answer(chosenIdx) {
+        if (state.answered) return;
+        state.answered = true;
+        const cur = state.questions[state.index];
+        const correct = cur.correctIdx;
+        const isCorrect = chosenIdx === correct;
+        if (isCorrect) state.score++;
+        else state.wrong.push({ ...cur, chosenIdx });
+
+        // Verrouiller et colorer les choix
+        const btns = document.querySelectorAll('#quiz-choices .choice-btn');
+        btns.forEach(btn => {
+            const idx = parseInt(btn.dataset.idx, 10);
+            btn.disabled = true;
+            btn.classList.remove('hover:border-indigo-400', 'hover:bg-indigo-50/40');
+            btn.classList.add('cursor-default');
+            const letter = btn.querySelector('.letter');
+            if (idx === correct) {
+                btn.classList.remove('border-slate-200');
+                btn.classList.add('border-emerald-500', 'bg-emerald-50');
+                letter.classList.remove('bg-slate-100', 'text-slate-600');
+                letter.classList.add('bg-emerald-500', 'text-white');
+            } else if (idx === chosenIdx) {
+                btn.classList.remove('border-slate-200');
+                btn.classList.add('border-red-400', 'bg-red-50');
+                letter.classList.remove('bg-slate-100', 'text-slate-600');
+                letter.classList.add('bg-red-500', 'text-white');
+            } else {
+                btn.classList.add('opacity-60');
+            }
+        });
+
+        // Feedback
+        const fb = document.getElementById('quiz-feedback');
+        const verdict = document.getElementById('feedback-verdict');
+        if (isCorrect) {
+            fb.className = 'mt-6 rounded-xl border p-4 fade-in bg-emerald-50 border-emerald-200';
+            verdict.className = 'flex items-center gap-2 font-bold mb-2 text-emerald-700';
+            verdict.innerHTML = '<i data-lucide="check-circle-2" width="18"></i> Bonne réponse';
+        } else {
+            fb.className = 'mt-6 rounded-xl border p-4 fade-in bg-red-50 border-red-200';
+            verdict.className = 'flex items-center gap-2 font-bold mb-2 text-red-700';
+            verdict.innerHTML = '<i data-lucide="x-circle" width="18"></i> Réponse incorrecte';
+        }
+        document.getElementById('feedback-explication').textContent = cur.explication;
+        document.getElementById('feedback-source').innerHTML =
+            '<i data-lucide="book-open" width="13"></i> Source : ' + cur.source;
+        fb.classList.remove('hidden');
+
+        document.getElementById('quiz-score-live').textContent =
+            'Score : ' + state.score + ' / ' + (state.index + 1);
+
+        const nextBtn = document.getElementById('quiz-next-btn');
+        nextBtn.classList.remove('hidden');
+        nextBtn.classList.add('flex');
+
+        lucide.createIcons();
+    }
+
+    function nextQuestion() {
+        if (state.index + 1 < state.questions.length) {
+            state.index++;
+            renderQuestion();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            showResults();
+        }
+    }
+
+    // ---------- Résultats ----------
+    function showResults() {
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-results').classList.remove('hidden');
+
+        const total = state.questions.length;
+        const score = state.score;
+        const pct = Math.round(score / total * 100);
+
+        document.getElementById('result-score').textContent = score;
+        document.getElementById('result-total').textContent = '/' + total;
+
+        const label = state.themeId === 'ALL'
+            ? 'Tous les thèmes'
+            : QCM_DATA.themes.find(x => x.id === state.themeId).titre;
+        document.getElementById('result-theme-label').textContent = label;
+
+        const pctEl = document.getElementById('result-percent');
+        pctEl.textContent = pct + ' % de bonnes réponses';
+        const emoji = document.getElementById('result-emoji');
+        if (pct >= 80) { pctEl.className = 'text-lg font-bold mb-6 text-emerald-600'; emoji.textContent = '🎯'; }
+        else if (pct >= 60) { pctEl.className = 'text-lg font-bold mb-6 text-indigo-600'; emoji.textContent = '👍'; }
+        else if (pct >= 40) { pctEl.className = 'text-lg font-bold mb-6 text-amber-600'; emoji.textContent = '📚'; }
+        else { pctEl.className = 'text-lg font-bold mb-6 text-red-600'; emoji.textContent = '🔁'; }
+
+        const review = document.getElementById('result-review');
+        const reviewList = document.getElementById('result-review-list');
+        if (state.wrong.length === 0) {
+            review.classList.add('hidden');
+        } else {
+            review.classList.remove('hidden');
+            const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+            reviewList.innerHTML = state.wrong.map(w => `
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">${w.theme}</div>
+                    <div class="font-bold text-slate-900 mb-3">${w.q}</div>
+                    <div class="text-sm text-red-700 flex items-start gap-2 mb-1">
+                        <i data-lucide="x" width="15" class="mt-0.5 flex-shrink-0"></i>
+                        <span>Votre réponse : ${letters[w.chosenIdx]}. ${w.choix[w.chosenIdx]}</span>
+                    </div>
+                    <div class="text-sm text-emerald-700 flex items-start gap-2 mb-3">
+                        <i data-lucide="check" width="15" class="mt-0.5 flex-shrink-0"></i>
+                        <span>Bonne réponse : ${letters[w.correctIdx]}. ${w.choix[w.correctIdx]}</span>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-3">${w.explication}</p>
+                    <p class="text-xs text-slate-400 mt-2 flex items-center gap-1"><i data-lucide="book-open" width="12"></i> ${w.source}</p>
+                </div>`).join('');
+        }
+
+        lucide.createIcons();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restartSame() {
+        startQuiz(state.themeId);
+    }
+
+    function goHome() {
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-results').classList.add('hidden');
+        document.getElementById('screen-home').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Init
+    renderHome();
+    lucide.createIcons();
+    </script>
+</body>
+</html>
